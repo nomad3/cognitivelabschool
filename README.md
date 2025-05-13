@@ -6,11 +6,28 @@ CognitiveLabsSchool is an AI-powered education platform designed to empower prof
 
 ## MVP Features
 
-*   **User Authentication:** Secure login/registration for users.
-*   **Course Catalog:** Browse available courses with descriptions and learning paths.
-*   **Course Enrollment:** Enroll in selected courses.
-*   **Module Progress Tracking:** Track progress within enrolled courses.
-*   **Basic Content Delivery:** Deliver course content (text, images, videos).
+The Minimum Viable Product (MVP) will focus on the core functionalities enabling users to register, browse courses, enroll, and consume basic content.
+
+1.  **User Authentication:**
+    *   User registration (email, password).
+    *   User login.
+    *   Secure password hashing.
+    *   JWT-based session management.
+2.  **Course Catalog:**
+    *   Display a list of available courses.
+    *   Show course details (title, description, instructor, modules).
+    *   Basic search/filter functionality (optional for MVP).
+3.  **Course Enrollment:**
+    *   Allow authenticated users to enroll in courses.
+    *   Track enrolled courses per user.
+4.  **Module & Lesson Management:**
+    *   Define course structure with modules and lessons.
+    *   Basic content delivery for lessons (text, images, video embeds).
+5.  **Progress Tracking:**
+    *   Mark lessons/modules as complete.
+    *   Display overall course progress for enrolled users.
+6.  **Basic Admin Interface (Optional for MVP, can be done via direct DB manipulation initially):**
+    *   Ability to add/edit courses, modules, and lessons.
 
 ## Tech Stack
 
