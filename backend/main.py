@@ -91,3 +91,67 @@ async def read_users_me(current_user: schemas.User = Depends(get_current_user)):
 @app.get("/")
 async def root():
     return {"message": "Hello World from CognitiveLabsSchool Backend!"}
+
+# Course Endpoints
+@app.post("/courses/", response_model=schemas.Course, status_code=status.HTTP_201_CREATED)
+def create_new_course(course: schemas.CourseCreate, db: Session = Depends(get_db), current_user: schemas.User = Depends(get_current_user)):
+    # Assuming current_user is the instructor, or add specific role check
+    return crud.create_course(db=db, course=course, instructor_id=current_user.id)
+
+@app.get("/courses/", response_model=List[schemas.Course])
+def read_courses(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
+    courses = crud.get_courses(db, skip=skip, limit=limit)
+    return courses
+
+@app.get("/courses/{course_id}", response_model=schemas.Course)
+def read_course(course_id: int, db: Session = Depends(get_db)):
+    db_course = crud.get_course(db, course_id=course_id)
+    if db_course is None:
+        raise HTTPException(status_code=404, detail="Course not found")
+    return db_course
+
+# Module Endpoints
+@app.post("/courses/{course_id}/modules/", response_model=schemas.Module, status_code=status.HTTP_201_CREATED)
+def create_new_module_for_course(
+    course_id: int, module: schemas.ModuleCreate, db: Session = Depends(get_db), current_user: schemas.User = Depends(get_current_user)
+):
+    # Add check to ensure current_user is instructor of the course or admin
+    db_course = crud.get_course(db, course_id=course_id)
+    if db_course is None:
+        raise HTTPException(status_code=404, detail="Course not found")
+    # Basic check: if course has an instructor, only that instructor can add modules
+    # More complex role/permission system would be needed for a real app
+    if db_course.instructor_id is not None and db_course.instructor_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to add modules to this course")
+    return crud.create_module_for_course(db=db, module=module, course_id=course_id)
+
+@app.get("/courses/{course_id}/modules/", response_model=List[schemas.Module])
+def read_modules_for_course(course_id: int, skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
+    db_course = crud.get_course(db, course_id=course_id)
+    if db_course is None:
+        raise HTTPException(status_code=404, detail="Course not found")
+    modules = crud.get_modules_for_course(db, course_id=course_id, skip=skip, limit=limit)
+    return modules
+
+# Enrollment Endpoints
+@app.post("/enrollments/", response_model=schemas.Enrollment, status_code=status.HTTP_201_CREATED)
+def enroll_in_course(enrollment: schemas.EnrollmentCreate, db: Session = Depends(get_db), current_user: schemas.User = Depends(get_current_user)):
+    if current_user.id != enrollment.user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Cannot enroll other users")
+    
+    db_course = crud.get_course(db, course_id=enrollment.course_id)
+    if db_course is None:
+        raise HTTPException(status_code=404, detail="Course not found")
+    
+    existing_enrollment = crud.get_enrollment_by_user_and_course(db, user_id=current_user.id, course_id=enrollment.course_id)
+    if existing_enrollment:
+        raise HTTPException(status_code=400, detail="User already enrolled in this course")
+        
+    return crud.create_enrollment(db=db, enrollment=enrollment)
+
+@app.get("/users/me/enrollments/", response_model=List[schemas.Enrollment])
+def read_my_enrollments(db: Session = Depends(get_db), current_user: schemas.User = Depends(get_current_user), skip: int = 0, limit: int = 10):
+    return crud.get_enrollments_by_user(db, user_id=current_user.id, skip=skip, limit=limit)
+
+# Need to import List for response_model
+from typing import List
