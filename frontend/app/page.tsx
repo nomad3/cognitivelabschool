@@ -95,6 +95,11 @@ export default function Home() {
       <div className="mt-10 text-center">
         <p className="text-xl">Welcome to the future of AI-powered learning!</p>
         {isAuthenticated && <p className="text-md mt-2 text-green-400">You are logged in.</p>}
+        <div className="mt-8">
+          <Link href="/courses" className="px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+            Browse Courses
+          </Link>
+        </div>
       </div>
     </main>
   )
