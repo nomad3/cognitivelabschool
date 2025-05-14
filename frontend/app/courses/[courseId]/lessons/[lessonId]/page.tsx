@@ -15,15 +15,53 @@ interface Lesson {
   module_id: number;
 }
 
+interface QuizQuestionOption {
+  id: string;
+  text: string;
+}
+
+interface QuizQuestion {
+  id: string;
+  text: string;
+  type: string; // e.g., 'multiple-choice'
+  options: QuizQuestionOption[];
+  skill_ids?: number[]; // Optional
+  // correctAnswer field is used by backend, not directly shown to student during quiz
+}
+
+interface QuizContent {
+  isPreAssessment?: boolean;
+  questions: QuizQuestion[];
+}
+
+interface UserAnswer {
+  question_id: string;
+  selected_option_id: string;
+}
+
+interface QuizSubmissionResult {
+  lesson_id: number;
+  overall_score: number;
+  score_per_skill?: Record<number, number>;
+}
+
+
 export default function LessonPage() {
   const params = useParams();
   const courseId = params?.courseId as string;
   const lessonId = params?.lessonId as string;
-  // const router = useRouter(); // Removed unused router
 
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Quiz specific state
+  const [quizData, setQuizData] = useState<QuizContent | null>(null);
+  const [userAnswers, setUserAnswers] = useState<Record<string, string>>({}); // { questionId: selectedOptionId }
+  const [quizResult, setQuizResult] = useState<QuizSubmissionResult | null>(null);
+  const [isSubmittingQuiz, setIsSubmittingQuiz] = useState(false);
+  const [quizSubmissionError, setQuizSubmissionError] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (!lessonId) return;
@@ -38,8 +76,25 @@ export default function LessonPage() {
           if (res.status === 404) throw new Error('Lesson not found.');
           throw new Error(`Failed to fetch lesson details: ${res.statusText}`);
         }
-        const data = await res.json();
+        const data: Lesson = await res.json();
         setLesson(data);
+        if (data.content_type === 'quiz' && data.content) {
+          try {
+            const parsedQuizData: QuizContent = JSON.parse(data.content);
+            setQuizData(parsedQuizData);
+            // Initialize answers
+            const initialAnswers: Record<string, string> = {};
+            // parsedQuizData.questions.forEach(q => initialAnswers[q.id] = ''); // Don't pre-select
+            setUserAnswers(initialAnswers);
+
+          } catch (e) {
+            console.error("Failed to parse quiz content:", e);
+            setError("Failed to load quiz: Invalid format.");
+            setQuizData(null);
+          }
+        } else {
+          setQuizData(null); // Reset if not a quiz or no content
+        }
       } catch (err) {
         if (err instanceof Error) {
           setError(err.message);
@@ -52,6 +107,62 @@ export default function LessonPage() {
     }
     fetchLessonDetails();
   }, [lessonId]);
+
+  const handleAnswerChange = (questionId: string, selectedOptionId: string) => {
+    setUserAnswers(prev => ({ ...prev, [questionId]: selectedOptionId }));
+  };
+
+  const handleSubmitQuiz = async () => {
+    if (!quizData || !lesson) return;
+    setIsSubmittingQuiz(true);
+    setQuizSubmissionError(null);
+    setQuizResult(null);
+
+    const submissionAnswers: UserAnswer[] = Object.entries(userAnswers).map(([question_id, selected_option_id]) => ({
+      question_id,
+      selected_option_id,
+    }));
+
+    if (submissionAnswers.length !== quizData.questions.length) {
+        setQuizSubmissionError("Please answer all questions before submitting.");
+        setIsSubmittingQuiz(false);
+        return;
+    }
+    
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+        setError("You must be logged in to submit a quiz."); // Should be handled by page auth ideally
+        setIsSubmittingQuiz(false);
+        return;
+    }
+
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+    try {
+      const res = await fetch(`${backendUrl}/lessons/${lesson.id}/submit_quiz`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ answers: submissionAnswers }),
+      });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({detail: 'Failed to submit quiz'}));
+        throw new Error(errorData.detail || 'Failed to submit quiz');
+      }
+      const resultData: QuizSubmissionResult = await res.json();
+      setQuizResult(resultData);
+    } catch (err) {
+      if (err instanceof Error) {
+        setQuizSubmissionError(err.message);
+      } else {
+        setQuizSubmissionError("An unknown error occurred during submission.");
+      }
+    } finally {
+      setIsSubmittingQuiz(false);
+    }
+  };
+
 
   const renderLessonContent = () => {
     if (!lesson || !lesson.content) return <p className="text-gray-400">No content available for this lesson.</p>;
@@ -75,7 +186,70 @@ export default function LessonPage() {
             ></iframe>
           </div>
         );
-      // Add cases for other content types like 'quiz_id' later
+      case 'quiz':
+        if (quizResult) {
+          return (
+            <div className="p-4 bg-gray-700 rounded-md">
+              <h3 className="text-2xl font-semibold mb-3 text-indigo-400">Quiz Results</h3>
+              <p className="text-xl mb-2">Overall Score: <span className="font-bold">{quizResult.overall_score.toFixed(2)}%</span></p>
+              {quizResult.score_per_skill && Object.keys(quizResult.score_per_skill).length > 0 && (
+                <div>
+                  <h4 className="text-lg font-medium mb-1">Score per Skill:</h4>
+                  <ul className="list-disc list-inside">
+                    {Object.entries(quizResult.score_per_skill).map(([skillId, score]) => (
+                      <li key={skillId} className="text-sm">Skill ID {skillId}: {score.toFixed(2)}%</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+               <button 
+                onClick={() => { /* Logic to retake or go to next lesson */ 
+                    setQuizResult(null); 
+                    setUserAnswers({});
+                    // Potentially re-fetch lesson if content could change or to reset state cleanly
+                }}
+                className="mt-4 bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded transition-colors"
+              >
+                Retake Quiz (if allowed) / View Content
+              </button>
+            </div>
+          );
+        }
+        if (!quizData || !quizData.questions || quizData.questions.length === 0) {
+          return <p className="text-gray-400">Quiz is not configured correctly or has no questions.</p>;
+        }
+        return (
+          <div className="space-y-6">
+            {quizData.questions.map((q, qIndex) => (
+              <div key={q.id || qIndex} className="p-4 bg-gray-700 rounded-md">
+                <p className="font-semibold text-lg mb-2 text-gray-200">{qIndex + 1}. {q.text}</p>
+                <div className="space-y-2">
+                  {q.options.map(opt => (
+                    <label key={opt.id} className="flex items-center p-2 rounded hover:bg-gray-600 transition-colors cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`question-${q.id}`}
+                        value={opt.id}
+                        checked={userAnswers[q.id] === opt.id}
+                        onChange={() => handleAnswerChange(q.id, opt.id)}
+                        className="form-radio h-4 w-4 text-indigo-500 bg-gray-800 border-gray-600 focus:ring-indigo-400"
+                      />
+                      <span className="ml-3 text-gray-300">{opt.text}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ))}
+            {quizSubmissionError && <p className="text-red-400 mt-4">{quizSubmissionError}</p>}
+            <button
+              onClick={handleSubmitQuiz}
+              disabled={isSubmittingQuiz}
+              className="w-full mt-6 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded transition-colors disabled:opacity-50"
+            >
+              {isSubmittingQuiz ? 'Submitting...' : 'Submit Quiz'}
+            </button>
+          </div>
+        );
       default:
         return <p className="text-gray-400">Unsupported content type: {lesson.content_type}</p>;
     }
