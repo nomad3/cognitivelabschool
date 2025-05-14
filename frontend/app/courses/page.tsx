@@ -3,11 +3,21 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
+interface Lesson {
+  id: number;
+  title: string;
+  content: string | null;
+  content_type: string;
+  order: number;
+  module_id: number;
+}
+
 interface Module {
   id: number;
   title: string;
   description: string | null;
   order: number;
+  lessons: Lesson[];
 }
 
 interface Course {

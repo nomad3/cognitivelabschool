@@ -4,11 +4,21 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation'; // Corrected import for useParams
 import Link from 'next/link';
 
+interface Lesson {
+  id: number;
+  title: string;
+  content: string | null;
+  content_type: string;
+  order: number;
+  module_id: number;
+}
+
 interface Module {
   id: number;
   title: string;
   description: string | null;
   order: number;
+  lessons: Lesson[];
 }
 
 interface Course {
@@ -28,7 +38,7 @@ interface EnrollmentResponse {
 
 export default function CourseDetailPage() {
   const params = useParams();
-  const courseId = params?.id as string; // Type assertion
+  const courseId = params?.courseId as string; // Changed from params?.id
   const router = useRouter();
 
   const [course, setCourse] = useState<Course | null>(null);
@@ -180,8 +190,22 @@ export default function CourseDetailPage() {
             {course.modules.sort((a,b) => a.order - b.order).map((module) => (
               <div key={module.id} className="bg-gray-800 shadow-md rounded-lg p-6">
                 <h3 className="text-2xl font-semibold text-indigo-400 mb-2">{module.title}</h3>
-                <p className="text-gray-400">{module.description || 'No module description.'}</p>
-                {/* Placeholder for lessons within the module */}
+                <p className="text-gray-400 mb-4">{module.description || 'No module description.'}</p>
+                {module.lessons && module.lessons.length > 0 ? (
+                  <ul className="space-y-3">
+                    {module.lessons.sort((a,b) => a.order - b.order).map((lesson) => (
+                      <li key={lesson.id} className="bg-gray-700 p-3 rounded-md hover:bg-gray-600 transition-colors">
+                        <Link href={`/courses/${courseId}/lessons/${lesson.id}`} className="block">
+                          <span className="text-lg text-indigo-300">{lesson.title}</span>
+                          {/* Basic content type indicator, can be enhanced */}
+                          <span className="ml-2 text-xs bg-gray-600 text-gray-300 px-2 py-0.5 rounded-full">{lesson.content_type}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-gray-500">No lessons in this module yet.</p>
+                )}
               </div>
             ))}
           </div>
