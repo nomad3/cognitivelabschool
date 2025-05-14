@@ -69,6 +69,17 @@ async def get_current_admin_user(current_user: models.User = Depends(get_current
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to perform this action")
     return current_user
 
+# Admin User Management
+@app.get("/admin/users/", response_model=List[schemas.User])
+def admin_read_users(
+    skip: int = 0, 
+    limit: int = 100, 
+    db: Session = Depends(get_db), 
+    admin_user: models.User = Depends(get_current_admin_user)
+):
+    users = crud.get_users(db, skip=skip, limit=limit)
+    return users
+
 @app.post("/users/", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = crud.get_user_by_email(db, email=user.email)
