@@ -46,18 +46,19 @@ CognitiveLabsSchool employs a modern, robust, and scalable tech stack:
 Our platform has rapidly evolved, incorporating a rich set of features:
 
 1.  **Robust User Management & Authentication:**
-    *   Secure user registration and login (email/password).
+    *   Secure user registration and login (email/password) with UX enhancements (e.g., password visibility toggle).
     *   Password hashing (bcrypt) and JWT-based session management.
     *   Role-based access control (Admin/User).
+    *   Modernized public homepage with clear CTAs and feature highlights.
 2.  **Comprehensive Course & Content Delivery:**
-    *   Dynamic course catalog display.
-    *   Detailed course pages with modules and lessons.
+    *   Modernized and user-friendly dynamic course catalog display.
+    *   Enhanced detailed course pages with improved module and lesson presentation.
     *   User enrollment in courses.
     *   Backend CRUD operations for all learning entities (Courses, Modules, Lessons).
     *   Seed data mechanism for easy environment setup.
 3.  **Interactive Learning & Progress Tracking:**
-    *   Lesson viewing with support for various content types (text currently, Markdown/video planned).
-    *   Ability to mark lessons as complete/incomplete.
+    *   Lesson viewing with support for various content types, including **Markdown rendering**.
+    *   Ability to mark lessons as complete/incomplete with clear visual feedback.
     *   Visual distinction for completed content.
 4.  **Advanced Skill Management & AI-Powered Assessment:**
     *   **Skill Definition:** Admins can define and manage a comprehensive list of AI-related skills.
@@ -70,13 +71,19 @@ Our platform has rapidly evolved, incorporating a rich set of features:
         *   Quiz submissions automatically update user skill proficiency scores in the backend.
 5.  **Personalized Learning Path - Foundation:**
     *   **AI-Driven Recommendations:** The system analyzes user skill proficiencies.
-    *   **Study Plan Generation:** For skills where proficiency is below a target threshold, the platform recommends relevant courses or modules that teach those specific skills.
-    *   **Dedicated Study Plan Page:** Users can view their personalized study plan, guiding their learning journey.
+    *   **Study Plan Generation:** For skills where proficiency is below a target threshold, the platform recommends relevant courses or modules.
+    *   **Modernized Student Homepage (Study Plan):** A personalized dashboard for users to view their progress, enrolled courses (placeholder stats), and study recommendations.
 6.  **Admin Capabilities:**
+    *   **Modernized Admin Dashboard:** A revamped central hub for administrators with a professional dark theme, clear navigation, (placeholder) key statistics, and quick access to management sections.
+    *   Consistent dark theme and improved UX across all core admin sections (Courses, Users, Skills, Enrollments management pages).
     *   Full CRUD interfaces (UI and API) for managing Skills.
     *   UI sections for associating skills with Courses and Modules.
     *   (Basic admin for other entities is evolving).
-7.  **Code Quality & Maintainability:**
+7.  **Enhanced User Experience (UX) & User Interface (UI):**
+    *   Consistent dark theme applied across authentication, admin, and core student-facing pages.
+    *   Improved navigation, visual feedback, and modern styling for a more cohesive and professional platform feel.
+    *   Tailwind CSS with `@tailwindcss/typography` for styled Markdown content.
+8.  **Code Quality & Maintainability:**
     *   Consistent linting and formatting.
     *   Resolution of ESLint/TypeScript issues for a cleaner codebase.
 
