@@ -62,11 +62,11 @@ const AdminDashboardPage = () => {
         <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
           <h2 className="text-xl font-semibold mb-3 text-gray-700">Manage Users</h2>
           <p className="text-gray-600 mb-4">View user list, manage roles, and handle enrollments.</p>
-           {/* <Link href="/admin/users"> */}
+           <Link href="/admin/users">
             <button className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded transition-colors">
               Go to User Management
             </button>
-          {/* </Link> */}
+          </Link>
         </div>
 
         <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
