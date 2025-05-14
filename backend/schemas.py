@@ -101,6 +101,7 @@ class Module(ModuleBase): # Re-declare to update
     id: int
     course_id: int
     lessons: List[Lesson] = []
+    associated_skills: List[Skill] = [] # Added associated skills
 
     model_config = {"from_attributes": True}
 
@@ -122,6 +123,7 @@ class Course(CourseBase):
     id: int
     instructor_id: Optional[int] = None
     modules: List[Module] = [] # Include modules in the course response
+    associated_skills: List[Skill] = [] # Added associated skills
 
     model_config = {"from_attributes": True}
 

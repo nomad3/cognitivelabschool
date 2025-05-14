@@ -219,6 +219,52 @@ def delete_skill(db: Session, skill_id: int):
     db.commit()
     return True
 
+# Course-Skill Association CRUD
+def add_skill_to_course(db: Session, course_id: int, skill_id: int):
+    db_course = get_course(db, course_id=course_id)
+    db_skill = get_skill(db, skill_id=skill_id)
+    if not db_course or not db_skill:
+        return None # Or raise error
+    if db_skill not in db_course.associated_skills:
+        db_course.associated_skills.append(db_skill)
+        db.commit()
+        db.refresh(db_course)
+    return db_course
+
+def remove_skill_from_course(db: Session, course_id: int, skill_id: int):
+    db_course = get_course(db, course_id=course_id)
+    db_skill = get_skill(db, skill_id=skill_id)
+    if not db_course or not db_skill:
+        return None # Or raise error
+    if db_skill in db_course.associated_skills:
+        db_course.associated_skills.remove(db_skill)
+        db.commit()
+        db.refresh(db_course)
+    return db_course
+
+# Module-Skill Association CRUD
+def add_skill_to_module(db: Session, module_id: int, skill_id: int):
+    db_module = get_module(db, module_id=module_id)
+    db_skill = get_skill(db, skill_id=skill_id)
+    if not db_module or not db_skill:
+        return None
+    if db_skill not in db_module.associated_skills:
+        db_module.associated_skills.append(db_skill)
+        db.commit()
+        db.refresh(db_module)
+    return db_module
+
+def remove_skill_from_module(db: Session, module_id: int, skill_id: int):
+    db_module = get_module(db, module_id=module_id)
+    db_skill = get_skill(db, skill_id=skill_id)
+    if not db_module or not db_skill:
+        return None
+    if db_skill in db_module.associated_skills:
+        db_module.associated_skills.remove(db_skill)
+        db.commit()
+        db.refresh(db_module)
+    return db_module
+
 # UserSkill CRUD (User Skill Proficiency)
 def get_user_skill(db: Session, user_id: int, skill_id: int):
     return db.query(models.UserSkill).filter(

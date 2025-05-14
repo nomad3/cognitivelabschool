@@ -124,7 +124,7 @@ const AdminManageModuleLessonsPage = () => {
       setError("Module ID is missing.");
       setLoading(false);
     }
-  }, [router, moduleId]); // adminStatus is not a dep as it's stable after initial check
+  }, [router, moduleId, fetchModuleAndLessons]); // Added fetchModuleAndLessons, adminStatus is stable
 
   const openNewLessonModal = () => {
     setEditingLesson(null);
@@ -151,7 +151,8 @@ const AdminManageModuleLessonsPage = () => {
       try {
         const parsedContent = JSON.parse(currentContent);
         setIsPreAssessmentQuiz(parsedContent.isPreAssessment === true);
-      } catch (e) {
+      } catch (err) { // Changed e to err
+        console.error("Error parsing quiz content for edit:", err);
         setIsPreAssessmentQuiz(false); // Default if parsing fails or field missing
       }
     } else {
@@ -178,10 +179,10 @@ const AdminManageModuleLessonsPage = () => {
             // contentJson.questions = []; // Initialize if not present
         }
         finalContent = JSON.stringify(contentJson, null, 2);
-      } catch (e) {
+      } catch (err) { // Changed e to err
         // If current content is not valid JSON, create a new structure
         finalContent = JSON.stringify({ isPreAssessment: isPreAssessmentQuiz, questions: [] }, null, 2);
-        setLessonError("Warning: Existing quiz content was not valid JSON and has been reset. Please re-add questions.");
+        setLessonError("Warning: Existing quiz content was not valid JSON and has been reset. Please re-add questions. Error: " + (err instanceof Error ? err.message : String(err)));
       }
     }
 

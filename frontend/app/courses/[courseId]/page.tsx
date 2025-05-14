@@ -101,7 +101,7 @@ export default function CourseDetailPage() {
   
   useEffect(() => {
     fetchCourseAndEnrollmentDetails();
-  }, [courseId]);
+  }, [courseId, fetchCourseAndEnrollmentDetails]); // Added fetchCourseAndEnrollmentDetails
 
   const handleEnroll = async () => {
     const token = localStorage.getItem('accessToken');

@@ -260,6 +260,25 @@ def delete_course_by_id(
     crud.delete_course(db=db, course_id=course_id)
     return None # FastAPI will return 204 No Content
 
+# Course-Skill Association Endpoints
+@app.post("/admin/courses/{course_id}/skills/{skill_id}", response_model=schemas.Course)
+def admin_add_skill_to_course(
+    course_id: int, skill_id: int, db: Session = Depends(get_db), admin_user: models.User = Depends(get_current_admin_user)
+):
+    updated_course = crud.add_skill_to_course(db, course_id=course_id, skill_id=skill_id)
+    if not updated_course:
+        raise HTTPException(status_code=404, detail="Course or Skill not found, or skill already associated")
+    return updated_course
+
+@app.delete("/admin/courses/{course_id}/skills/{skill_id}", response_model=schemas.Course)
+def admin_remove_skill_from_course(
+    course_id: int, skill_id: int, db: Session = Depends(get_db), admin_user: models.User = Depends(get_current_admin_user)
+):
+    updated_course = crud.remove_skill_from_course(db, course_id=course_id, skill_id=skill_id)
+    if not updated_course:
+        raise HTTPException(status_code=404, detail="Course or Skill not found, or skill not associated")
+    return updated_course
+
 # Module Endpoints
 @app.post("/courses/{course_id}/modules/", response_model=schemas.Module, status_code=status.HTTP_201_CREATED)
 def create_new_module_for_course(
@@ -319,6 +338,25 @@ def delete_module_by_id(
 
     crud.delete_module(db=db, module_id=module_id)
     return None
+
+# Module-Skill Association Endpoints
+@app.post("/admin/modules/{module_id}/skills/{skill_id}", response_model=schemas.Module)
+def admin_add_skill_to_module(
+    module_id: int, skill_id: int, db: Session = Depends(get_db), admin_user: models.User = Depends(get_current_admin_user)
+):
+    updated_module = crud.add_skill_to_module(db, module_id=module_id, skill_id=skill_id)
+    if not updated_module:
+        raise HTTPException(status_code=404, detail="Module or Skill not found, or skill already associated")
+    return updated_module
+
+@app.delete("/admin/modules/{module_id}/skills/{skill_id}", response_model=schemas.Module)
+def admin_remove_skill_from_module(
+    module_id: int, skill_id: int, db: Session = Depends(get_db), admin_user: models.User = Depends(get_current_admin_user)
+):
+    updated_module = crud.remove_skill_from_module(db, module_id=module_id, skill_id=skill_id)
+    if not updated_module:
+        raise HTTPException(status_code=404, detail="Module or Skill not found, or skill not associated")
+    return updated_module
 
 async def get_current_admin_or_instructor_for_lesson(
     lesson_id: int, 

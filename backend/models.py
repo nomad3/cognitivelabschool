@@ -1,7 +1,19 @@
-from sqlalchemy import Boolean, Column, Integer, String, Text, ForeignKey
+from sqlalchemy import Boolean, Column, Integer, String, Text, ForeignKey, Table
 from sqlalchemy.orm import relationship
 from database import Base # Changed to absolute import
 from datetime import datetime
+
+# Association table for Course and Skill (Many-to-Many)
+course_skill_association_table = Table('course_skill_association', Base.metadata,
+    Column('course_id', Integer, ForeignKey('courses.id'), primary_key=True),
+    Column('skill_id', Integer, ForeignKey('skills.id'), primary_key=True)
+)
+
+# Association table for Module and Skill (Many-to-Many)
+module_skill_association_table = Table('module_skill_association', Base.metadata,
+    Column('module_id', Integer, ForeignKey('modules.id'), primary_key=True),
+    Column('skill_id', Integer, ForeignKey('skills.id'), primary_key=True)
+)
 
 class User(Base):
     __tablename__ = "users"
@@ -29,6 +41,11 @@ class Course(Base):
     instructor = relationship("User") # If using User as instructor
     modules = relationship("Module", back_populates="course", cascade="all, delete-orphan")
     enrollments = relationship("Enrollment", back_populates="course")
+    associated_skills = relationship(
+        "Skill",
+        secondary=course_skill_association_table,
+        back_populates="courses"
+    )
 
 
 class Module(Base):
@@ -42,6 +59,11 @@ class Module(Base):
 
     course = relationship("Course", back_populates="modules")
     lessons = relationship("Lesson", back_populates="module", cascade="all, delete-orphan")
+    associated_skills = relationship(
+        "Skill",
+        secondary=module_skill_association_table,
+        back_populates="modules"
+    )
 
 
 class Lesson(Base):
@@ -76,9 +98,17 @@ class Skill(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True, nullable=False)
     description = Column(Text, nullable=True)
-    # Relationship to link skills to lessons or quiz questions could be added later if needed
-    # e.g., through an association table or a direct ForeignKey if a lesson/question has one primary skill.
     user_proficiencies = relationship("UserSkill", back_populates="skill_definition")
+    courses = relationship(
+        "Course",
+        secondary=course_skill_association_table,
+        back_populates="associated_skills"
+    )
+    modules = relationship(
+        "Module",
+        secondary=module_skill_association_table,
+        back_populates="associated_skills"
+    )
 
 
 class UserSkill(Base):
