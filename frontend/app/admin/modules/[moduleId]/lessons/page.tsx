@@ -45,7 +45,8 @@ const AdminManageModuleLessonsPage = () => {
   const [lessonOrder, setLessonOrder] = useState(0);
   const [lessonError, setLessonError] = useState<string | null>(null);
   const [isSubmittingLesson, setIsSubmittingLesson] = useState(false);
-  const [availableSkills, setAvailableSkills] = useState<Skill[]>([]); // State for skills
+  const [availableSkills, setAvailableSkills] = useState<Skill[]>([]);
+  const [isPreAssessmentQuiz, setIsPreAssessmentQuiz] = useState(false); // For quiz type
 
   const fetchModuleAndLessons = async () => {
     setLoading(true);
@@ -131,6 +132,7 @@ const AdminManageModuleLessonsPage = () => {
     setLessonContent('');
     setLessonContentType('text');
     setLessonOrder(moduleDetails?.lessons.length ? Math.max(...moduleDetails.lessons.map(l => l.order)) + 1 : 0);
+    setIsPreAssessmentQuiz(false); // Default for new lesson
     setLessonError(null);
     setShowLessonModal(true);
   };
@@ -138,10 +140,23 @@ const AdminManageModuleLessonsPage = () => {
   const openEditLessonModal = (lesson: Lesson) => {
     setEditingLesson(lesson);
     setLessonTitle(lesson.title);
-    setLessonContent(lesson.content || '');
-    setLessonContentType(lesson.content_type || 'text');
+    const currentContent = lesson.content || '';
+    setLessonContent(currentContent);
+    const currentContentType = lesson.content_type || 'text';
+    setLessonContentType(currentContentType);
     setLessonOrder(lesson.order);
     setLessonError(null);
+
+    if (currentContentType === 'quiz') {
+      try {
+        const parsedContent = JSON.parse(currentContent);
+        setIsPreAssessmentQuiz(parsedContent.isPreAssessment === true);
+      } catch (e) {
+        setIsPreAssessmentQuiz(false); // Default if parsing fails or field missing
+      }
+    } else {
+      setIsPreAssessmentQuiz(false);
+    }
     setShowLessonModal(true);
   };
 
@@ -152,9 +167,27 @@ const AdminManageModuleLessonsPage = () => {
     const token = localStorage.getItem('access_token');
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
+    let finalContent = lessonContent;
+    if (lessonContentType === 'quiz') {
+      try {
+        // Try to parse existing content, or start with a new object
+        const contentJson = lessonContent ? JSON.parse(lessonContent) : {};
+        contentJson.isPreAssessment = isPreAssessmentQuiz;
+        // Ensure questions array exists if we want to enforce structure, but for now just set the flag
+        if (!contentJson.questions) {
+            // contentJson.questions = []; // Initialize if not present
+        }
+        finalContent = JSON.stringify(contentJson, null, 2);
+      } catch (e) {
+        // If current content is not valid JSON, create a new structure
+        finalContent = JSON.stringify({ isPreAssessment: isPreAssessmentQuiz, questions: [] }, null, 2);
+        setLessonError("Warning: Existing quiz content was not valid JSON and has been reset. Please re-add questions.");
+      }
+    }
+
     const payload = {
         title: lessonTitle,
-        content: lessonContent,
+        content: finalContent,
         content_type: lessonContentType,
         order: Number(lessonOrder)
     };
@@ -287,8 +320,20 @@ const AdminManageModuleLessonsPage = () => {
                 </select>
                 {lessonContentType === 'quiz' && (
                   <div className="mt-2 p-3 bg-gray-50 rounded">
+                    <div className="mb-2">
+                        <label htmlFor="isPreAssessmentQuiz" className="flex items-center text-sm text-gray-700">
+                            <input 
+                                type="checkbox" 
+                                id="isPreAssessmentQuiz"
+                                checked={isPreAssessmentQuiz}
+                                onChange={e => setIsPreAssessmentQuiz(e.target.checked)}
+                                className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 mr-2"
+                            />
+                            Is this a Pre-assessment Quiz?
+                        </label>
+                    </div>
                     <p className="text-xs text-gray-600 mb-1">
-                        For quizzes, structure your content as JSON. Include a `questions` array.
+                        For quizzes, structure your content as JSON. Include `isPreAssessment` and a `questions` array.
                         Each question can have an optional `skill_ids` array. Example:
                     </p>
                     <pre className="text-xs bg-gray-100 p-2 rounded overflow-x-auto">
