@@ -1,5 +1,16 @@
 # CognitiveLabsSchool - Revolutionizing Professional AI Education 🚀
 
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python"/>
+  <img src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI"/>
+  <img src="https://img.shields.io/badge/SQLAlchemy-D71F00?style=flat-square&logo=sqlalchemy&logoColor=white" alt="SQLAlchemy"/>
+  <img src="https://img.shields.io/badge/SQLite-003B57?style=flat-square&logo=sqlite&logoColor=white" alt="SQLite"/>
+  <img src="https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white" alt="Next.js"/>
+  <img src="https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React"/>
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript"/>
+  <img src="https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker"/>
+</p>
+
 ## Igniting AI Potential in Every Professional
 
 CognitiveLabsSchool is an innovative AI-powered education platform meticulously engineered to empower professionals and organizations to master and integrate Artificial Intelligence into their daily workflows. In an era where AI is reshaping industries, we provide a B2B solution offering a dynamic curriculum tailored for diverse expertise levels—from AI novices to seasoned practitioners. Our mission is to enhance productivity, drive efficiency, and ensure your workforce remains at the competitive vanguard.
