@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
-from . import models, schemas
+import models # Changed to absolute import
+import schemas # Changed to absolute import
 from passlib.context import CryptContext
 from typing import List, Optional
 
@@ -35,7 +36,17 @@ def get_courses(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Course).offset(skip).limit(limit).all()
 
 def create_course(db: Session, course: schemas.CourseCreate, instructor_id: Optional[int] = None):
-    db_course = models.Course(**course.dict(), instructor_id=instructor_id)
+    course_data = course.dict()
+    # If instructor_id is explicitly passed to this function, it takes precedence.
+    # Remove instructor_id from course_data if it exists to avoid duplicate keyword arg.
+    if 'instructor_id' in course_data and instructor_id is not None:
+        del course_data['instructor_id']
+    
+    # If instructor_id was not in course_data (e.g. schema didn't have it or it was None)
+    # and instructor_id is passed to function, it will be used.
+    # If instructor_id is in course_data and instructor_id func arg is None, schema value is used.
+    
+    db_course = models.Course(**course_data, instructor_id=instructor_id if instructor_id is not None else course_data.get('instructor_id'))
     db.add(db_course)
     db.commit()
     db.refresh(db_course)

@@ -15,14 +15,12 @@ class Module(ModuleBase):
     id: int
     course_id: int
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}
 
 # Course Schemas
 class CourseBase(BaseModel):
     title: str
     description: Optional[str] = None
-    # instructor_id: Optional[int] = None # Handled by relationship or separate instructor schema
 
 class CourseCreate(CourseBase):
     instructor_id: Optional[int] = None # Allow setting instructor on creation
@@ -32,8 +30,7 @@ class Course(CourseBase):
     instructor_id: Optional[int] = None
     modules: List[Module] = [] # Include modules in the course response
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}
 
 # User Schemas
 class UserBase(BaseModel):
@@ -49,8 +46,7 @@ class User(UserBase):
     # courses: List[Course] = [] # To show courses created by this user if they are an instructor
     # enrollments: List['Enrollment'] = [] # Forward reference for Enrollment
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}
 
 
 # Enrollment Schemas
@@ -67,8 +63,7 @@ class Enrollment(EnrollmentBase):
     user: User # Nested User schema
     course: Course # Nested Course schema
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}
 
 # Update User schema to resolve forward reference if needed, or handle via separate endpoint
 # User.update_forward_refs() # If Enrollment was a forward reference string

@@ -4,10 +4,12 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, List # Ensure List is imported here as it's used later
 
-from . import crud, models, schemas
-from .database import SessionLocal, engine, get_db
+import crud
+import models
+import schemas
+from database import SessionLocal, engine, get_db # Changed to absolute import
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -153,5 +155,41 @@ def enroll_in_course(enrollment: schemas.EnrollmentCreate, db: Session = Depends
 def read_my_enrollments(db: Session = Depends(get_db), current_user: schemas.User = Depends(get_current_user), skip: int = 0, limit: int = 10):
     return crud.get_enrollments_by_user(db, user_id=current_user.id, skip=skip, limit=limit)
 
-# Need to import List for response_model
-from typing import List
+# Temp endpoint to seed data
+@app.post("/seed_data/", status_code=status.HTTP_201_CREATED)
+def seed_data(db: Session = Depends(get_db)):
+    # Check if data already exists to prevent duplicates
+    courses_exist = db.query(models.Course).first()
+    if courses_exist:
+        raise HTTPException(status_code=400, detail="Data already seeded")
+
+    # Create a sample instructor/user if none exists or use an existing one
+    instructor_email = "instructor@example.com"
+    instructor = crud.get_user_by_email(db, email=instructor_email)
+    if not instructor:
+        instructor_user_in = schemas.UserCreate(email=instructor_email, password="securepassword", full_name="Dr. Instructor")
+        instructor = crud.create_user(db, instructor_user_in)
+
+    # Seed Courses
+    course1_in = schemas.CourseCreate(title="Introduction to AI", description="Learn the fundamentals of Artificial Intelligence.", instructor_id=instructor.id)
+    course1 = crud.create_course(db, course=course1_in, instructor_id=instructor.id)
+
+    course2_in = schemas.CourseCreate(title="Advanced Python for AI", description="Deep dive into Python programming for AI applications.", instructor_id=instructor.id)
+    course2 = crud.create_course(db, course=course2_in, instructor_id=instructor.id)
+    
+    course3_in = schemas.CourseCreate(title="Natural Language Processing", description="Understand and build NLP models.", instructor_id=instructor.id)
+    course3 = crud.create_course(db, course=course3_in, instructor_id=instructor.id)
+
+
+    # Seed Modules for Course 1
+    module1_c1_in = schemas.ModuleCreate(title="Module 1: What is AI?", description="History and basic concepts of AI.", order=1)
+    crud.create_module_for_course(db, module=module1_c1_in, course_id=course1.id)
+    
+    module2_c1_in = schemas.ModuleCreate(title="Module 2: Machine Learning Basics", description="Introduction to ML algorithms.", order=2)
+    crud.create_module_for_course(db, module=module2_c1_in, course_id=course1.id)
+
+    # Seed Modules for Course 2
+    module1_c2_in = schemas.ModuleCreate(title="Module 1: Advanced Data Structures", description="Using advanced data structures in Python.", order=1)
+    crud.create_module_for_course(db, module=module1_c2_in, course_id=course2.id)
+
+    return {"message": "Sample data seeded successfully!"}
