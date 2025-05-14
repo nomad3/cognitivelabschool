@@ -1,7 +1,11 @@
 "use client";
 
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link'; // Import Link for navigation
+
+// It's good practice to import icons if you use them, e.g., from a library like react-icons
+// For simplicity, we'll use text for now: [Show]/[Hide]
 
 interface AuthFormProps {
   mode: 'login' | 'register';
@@ -10,6 +14,7 @@ interface AuthFormProps {
 export default function AuthForm({ mode }: AuthFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false); // State for password visibility
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -94,17 +99,25 @@ export default function AuthForm({ mode }: AuthFormProps) {
         <label htmlFor="password"className="block text-sm font-medium text-gray-300">
           Password
         </label>
-        <div className="mt-1">
+        <div className="mt-1 relative">
           <input
             id="password"
             name="password"
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
             required
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="appearance-none block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-700 text-white"
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+            className="appearance-none block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-700 text-white pr-10" // Added pr-10 for button space
           />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute inset-y-0 right-0 px-3 flex items-center text-sm text-gray-400 hover:text-gray-200"
+            aria-label={showPassword ? "Hide password" : "Show password"}
+          >
+            {showPassword ? 'Hide' : 'Show'}
+          </button>
         </div>
       </div>
 
@@ -122,6 +135,24 @@ export default function AuthForm({ mode }: AuthFormProps) {
         >
           {isLoading ? 'Processing...' : mode === 'login' ? 'Sign in' : 'Register'}
         </button>
+      </div>
+
+      <div className="text-sm text-center">
+        {mode === 'login' ? (
+          <p className="text-gray-400">
+            Don't have an account?{' '}
+            <Link href="/register" className="font-medium text-indigo-400 hover:text-indigo-300">
+              Register
+            </Link>
+          </p>
+        ) : (
+          <p className="text-gray-400">
+            Already have an account?{' '}
+            <Link href="/login" className="font-medium text-indigo-400 hover:text-indigo-300">
+              Sign in
+            </Link>
+          </p>
+        )}
       </div>
     </form>
   );

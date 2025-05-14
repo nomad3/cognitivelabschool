@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation'; // Removed useRouter
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
-// Consider a markdown renderer if content_type is markdown
-// import ReactMarkdown from 'react-markdown'; 
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm'; // For GitHub Flavored Markdown (tables, strikethrough, etc.)
 
 interface Lesson {
   id: number;
@@ -171,8 +171,11 @@ export default function LessonPage() {
       case 'text':
         return <p className="text-gray-300 whitespace-pre-wrap">{lesson.content}</p>;
       case 'markdown':
-        // return <ReactMarkdown className="prose prose-invert max-w-none">{lesson.content}</ReactMarkdown>;
-        return <p className="text-gray-300 whitespace-pre-wrap">[Markdown Content Placeholder] {lesson.content}</p>; // Placeholder
+        return (
+          <div className="prose prose-sm sm:prose lg:prose-lg xl:prose-xl prose-invert max-w-none">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{lesson.content}</ReactMarkdown>
+          </div>
+        );
       case 'video_url':
         return (
           <div className="aspect-w-16 aspect-h-9">
