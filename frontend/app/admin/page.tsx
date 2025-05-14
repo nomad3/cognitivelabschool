@@ -70,6 +70,16 @@ const AdminDashboardPage = () => {
         </div>
 
         <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+          <h2 className="text-xl font-semibold mb-3 text-gray-700">Manage Enrollments</h2>
+          <p className="text-gray-600 mb-4">View all student enrollments across courses.</p>
+          <Link href="/admin/enrollments">
+            <button className="bg-teal-500 hover:bg-teal-600 text-white font-semibold py-2 px-4 rounded transition-colors">
+              View Enrollments
+            </button>
+          </Link>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
           <h2 className="text-xl font-semibold mb-3 text-gray-700">Platform Analytics</h2>
           <p className="text-gray-600 mb-4">View overall metrics, reports, and platform usage statistics.</p>
            {/* <Link href="/admin/analytics"> */}

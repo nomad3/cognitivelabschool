@@ -182,6 +182,9 @@ def create_enrollment(db: Session, enrollment: schemas.EnrollmentCreate):
 def get_enrollments_by_user(db: Session, user_id: int, skip: int = 0, limit: int = 100):
     return db.query(models.Enrollment).filter(models.Enrollment.user_id == user_id).offset(skip).limit(limit).all()
 
+def get_all_enrollments(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Enrollment).offset(skip).limit(limit).all()
+
 import json # For handling completed_lessons JSON string
 
 def get_enrollment_by_user_and_course(db: Session, user_id: int, course_id: int):

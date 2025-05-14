@@ -101,6 +101,18 @@ def admin_update_user_details(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not update user")
     return updated_user
 
+# Admin Enrollment Management
+@app.get("/admin/enrollments/", response_model=List[schemas.Enrollment])
+def admin_read_all_enrollments(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    admin_user: models.User = Depends(get_current_admin_user)
+):
+    enrollments = crud.get_all_enrollments(db, skip=skip, limit=limit)
+    # The schemas.Enrollment.from_orm method handles parsing of completed_lessons
+    return [schemas.Enrollment.from_orm(e) for e in enrollments]
+
 @app.post("/users/", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = crud.get_user_by_email(db, email=user.email)
