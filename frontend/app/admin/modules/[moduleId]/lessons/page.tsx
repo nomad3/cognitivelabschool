@@ -246,11 +246,22 @@ const AdminManageModuleLessonsPage = () => {
               </div>
               <div className="mb-4">
                 <label htmlFor="lessonContentType" className="block text-sm font-medium text-gray-700">Content Type</label>
-                <select id="lessonContentType" value={lessonContentType} onChange={e => setLessonContentType(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                <select 
+                    id="lessonContentType" 
+                    value={lessonContentType} 
+                    onChange={e => setLessonContentType(e.target.value)} 
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                >
                     <option value="text">Text</option>
                     <option value="markdown">Markdown</option>
                     <option value="video_url">Video URL</option>
+                    <option value="quiz">Quiz (JSON)</option>
                 </select>
+                {lessonContentType === 'quiz' && (
+                    <p className="mt-1 text-xs text-gray-500">
+                        Enter quiz data as JSON. See documentation for structure.
+                    </p>
+                )}
               </div>
               <div className="mb-4">
                 <label htmlFor="lessonOrder" className="block text-sm font-medium text-gray-700">Order</label>
