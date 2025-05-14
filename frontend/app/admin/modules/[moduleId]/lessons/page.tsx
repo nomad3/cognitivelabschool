@@ -13,6 +13,12 @@ interface Lesson {
   order: number;
 }
 
+interface Skill { // Added Skill interface
+  id: number;
+  name: string;
+  description: string | null;
+}
+
 interface ModuleDetails {
   id: number;
   title: string;
@@ -39,10 +45,11 @@ const AdminManageModuleLessonsPage = () => {
   const [lessonOrder, setLessonOrder] = useState(0);
   const [lessonError, setLessonError] = useState<string | null>(null);
   const [isSubmittingLesson, setIsSubmittingLesson] = useState(false);
+  const [availableSkills, setAvailableSkills] = useState<Skill[]>([]); // State for skills
 
   const fetchModuleAndLessons = async () => {
     setLoading(true);
-    setError(null); 
+    setError(null);
     try {
       const token = localStorage.getItem('access_token');
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
@@ -89,13 +96,34 @@ const AdminManageModuleLessonsPage = () => {
     }
     setIsAuthorized(true);
 
+    const fetchSkills = async () => {
+        try {
+            const token = localStorage.getItem('access_token');
+            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+            const response = await fetch(`${backendUrl}/admin/skills/?limit=200`, { // Fetch skills
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+            if (!response.ok) {
+                throw new Error('Failed to fetch skills');
+            }
+            const data: Skill[] = await response.json();
+            setAvailableSkills(data);
+        } catch (err) {
+            console.error("Error fetching skills:", err);
+            // Not setting main page error for this, but could log or show minor warning
+        }
+    };
+
     if (moduleId) {
       fetchModuleAndLessons();
+      if (adminStatus === 'true') { // Only fetch skills if admin
+        fetchSkills();
+      }
     } else {
       setError("Module ID is missing.");
       setLoading(false);
     }
-  }, [router, moduleId]);
+  }, [router, moduleId]); // adminStatus is not a dep as it's stable after initial check
 
   const openNewLessonModal = () => {
     setEditingLesson(null);
@@ -258,9 +286,37 @@ const AdminManageModuleLessonsPage = () => {
                     <option value="quiz">Quiz (JSON)</option>
                 </select>
                 {lessonContentType === 'quiz' && (
-                    <p className="mt-1 text-xs text-gray-500">
-                        Enter quiz data as JSON. See documentation for structure.
+                  <div className="mt-2 p-3 bg-gray-50 rounded">
+                    <p className="text-xs text-gray-600 mb-1">
+                        For quizzes, structure your content as JSON. Include a `questions` array.
+                        Each question can have an optional `skill_ids` array. Example:
                     </p>
+                    <pre className="text-xs bg-gray-100 p-2 rounded overflow-x-auto">
+{`{
+  "isPreAssessment": false,
+  "questions": [
+    {
+      "id": "q1", 
+      "text": "Question text?", 
+      "type": "multiple-choice", 
+      "skill_ids": [1, 2], 
+      "options": [...], 
+      "correctAnswer": "..." 
+    }
+  ]
+}`}
+                    </pre>
+                    {availableSkills.length > 0 && (
+                        <div className="mt-2">
+                            <p className="text-xs text-gray-600 mb-1">Available Skill IDs:</p>
+                            <ul className="list-disc list-inside text-xs">
+                                {availableSkills.map(skill => (
+                                    <li key={skill.id}>{skill.id}: {skill.name}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                  </div>
                 )}
               </div>
               <div className="mb-4">
