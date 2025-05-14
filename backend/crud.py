@@ -95,6 +95,30 @@ def get_modules_for_course(db: Session, course_id: int, skip: int = 0, limit: in
 def get_module(db: Session, module_id: int):
     return db.query(models.Module).filter(models.Module.id == module_id).first()
 
+def update_module(db: Session, module_id: int, module_update: schemas.ModuleUpdate):
+    db_module = get_module(db, module_id=module_id)
+    if not db_module:
+        return None
+
+    update_data = module_update.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_module, key, value)
+    
+    db.add(db_module)
+    db.commit()
+    db.refresh(db_module)
+    return db_module
+
+def delete_module(db: Session, module_id: int):
+    db_module = get_module(db, module_id=module_id)
+    if not db_module:
+        return None
+    
+    db.delete(db_module)
+    db.commit()
+    return True
+
+
 # Lesson CRUD
 def create_lesson_for_module(db: Session, lesson: schemas.LessonCreate, module_id: int):
     db_lesson = models.Lesson(**lesson.dict(), module_id=module_id)

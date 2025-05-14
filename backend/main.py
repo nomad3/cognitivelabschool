@@ -154,7 +154,8 @@ def create_new_module_for_course(
     db_course = crud.get_course(db, course_id=course_id)
     if db_course is None:
         raise HTTPException(status_code=404, detail="Course not found")
-    if db_course.instructor_id is not None and db_course.instructor_id != current_user.id:
+    # Allow if current user is admin OR the instructor of the course
+    if not current_user.is_admin and (db_course.instructor_id is None or db_course.instructor_id != current_user.id):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to add modules to this course")
     return crud.create_module_for_course(db=db, module=module, course_id=course_id)
 
@@ -166,6 +167,39 @@ def read_modules_for_course(course_id: int, skip: int = 0, limit: int = 10, db: 
     modules = crud.get_modules_for_course(db, course_id=course_id, skip=skip, limit=limit)
     return modules
 
+@app.put("/modules/{module_id}", response_model=schemas.Module)
+def update_module_details(
+    module_id: int,
+    module_update: schemas.ModuleUpdate,
+    db: Session = Depends(get_db),
+    admin_user: models.User = Depends(get_current_admin_user) # Ensures only admin can update
+):
+    db_module = crud.get_module(db, module_id=module_id)
+    if db_module is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Module not found")
+    
+    # Optional: Check if module belongs to a course the admin has rights to, if necessary
+    # For now, admin can edit any module.
+
+    updated_module = crud.update_module(db=db, module_id=module_id, module_update=module_update)
+    if updated_module is None:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not update module")
+    return updated_module
+
+@app.delete("/modules/{module_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_module_by_id(
+    module_id: int,
+    db: Session = Depends(get_db),
+    admin_user: models.User = Depends(get_current_admin_user) # Ensures only admin can delete
+):
+    db_module = crud.get_module(db, module_id=module_id)
+    if db_module is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Module not found")
+
+    crud.delete_module(db=db, module_id=module_id)
+    return None
+
+
 # Lesson Endpoints
 @app.post("/modules/{module_id}/lessons/", response_model=schemas.Lesson, status_code=status.HTTP_201_CREATED)
 def create_new_lesson_for_module(
@@ -175,7 +209,8 @@ def create_new_lesson_for_module(
     if db_module is None:
         raise HTTPException(status_code=404, detail="Module not found")
     db_course = crud.get_course(db, course_id=db_module.course_id)
-    if db_course.instructor_id is not None and db_course.instructor_id != current_user.id: 
+    # Allow if current user is admin OR the instructor of the course the module belongs to
+    if not current_user.is_admin and (db_course.instructor_id is None or db_course.instructor_id != current_user.id):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to add lessons to this module")
     return crud.create_lesson_for_module(db=db, lesson=lesson, module_id=module_id)
 

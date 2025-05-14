@@ -194,6 +194,15 @@ const EditCoursePage = () => {
           </button>
         </div>
       </form>
+
+      <div className="mt-8 pt-6 border-t border-gray-200">
+        <h2 className="text-2xl font-semibold mb-4 text-gray-700">Manage Course Content</h2>
+        <Link href={`/admin/courses/${courseId}/modules`}>
+          <button className="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-4 rounded transition-colors">
+            Manage Modules & Lessons
+          </button>
+        </Link>
+      </div>
     </div>
   );
 };

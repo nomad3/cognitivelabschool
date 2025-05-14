@@ -11,6 +11,11 @@ class ModuleBase(BaseModel):
 class ModuleCreate(ModuleBase):
     pass
 
+class ModuleUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    order: Optional[int] = None
+
 class Module(ModuleBase):
     id: int
     course_id: int
