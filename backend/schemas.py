@@ -2,6 +2,22 @@ from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime # Added for enrolled_at
 
+# Skill Schemas
+class SkillBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+class SkillCreate(SkillBase):
+    pass
+
+class SkillUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+
+class Skill(SkillBase):
+    id: int
+    model_config = {"from_attributes": True}
+
 # Module Schemas
 class ModuleBase(BaseModel):
     title: str

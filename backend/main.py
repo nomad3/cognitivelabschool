@@ -113,6 +113,76 @@ def admin_read_all_enrollments(
     # The schemas.Enrollment.from_orm method handles parsing of completed_lessons
     return [schemas.Enrollment.from_orm(e) for e in enrollments]
 
+# Admin Skill Management
+@app.post("/admin/skills/", response_model=schemas.Skill, status_code=status.HTTP_201_CREATED)
+def admin_create_skill(
+    skill: schemas.SkillCreate, 
+    db: Session = Depends(get_db), 
+    admin_user: models.User = Depends(get_current_admin_user)
+):
+    db_skill_by_name = crud.get_skill_by_name(db, name=skill.name)
+    if db_skill_by_name:
+        raise HTTPException(status_code=400, detail="Skill with this name already exists")
+    return crud.create_skill(db=db, skill=skill)
+
+@app.get("/admin/skills/", response_model=List[schemas.Skill])
+def admin_read_skills(
+    skip: int = 0, 
+    limit: int = 100, 
+    db: Session = Depends(get_db), 
+    admin_user: models.User = Depends(get_current_admin_user)
+):
+    skills = crud.get_skills(db, skip=skip, limit=limit)
+    return skills
+
+@app.get("/admin/skills/{skill_id}", response_model=schemas.Skill)
+def admin_read_skill(
+    skill_id: int, 
+    db: Session = Depends(get_db), 
+    admin_user: models.User = Depends(get_current_admin_user)
+):
+    db_skill = crud.get_skill(db, skill_id=skill_id)
+    if db_skill is None:
+        raise HTTPException(status_code=404, detail="Skill not found")
+    return db_skill
+
+@app.put("/admin/skills/{skill_id}", response_model=schemas.Skill)
+def admin_update_skill(
+    skill_id: int, 
+    skill_update: schemas.SkillUpdate, 
+    db: Session = Depends(get_db), 
+    admin_user: models.User = Depends(get_current_admin_user)
+):
+    db_skill = crud.get_skill(db, skill_id=skill_id)
+    if db_skill is None:
+        raise HTTPException(status_code=404, detail="Skill not found")
+    
+    # Check if new name conflicts with an existing skill (if name is being changed)
+    if skill_update.name and skill_update.name != db_skill.name:
+        existing_skill_with_new_name = crud.get_skill_by_name(db, name=skill_update.name)
+        if existing_skill_with_new_name and existing_skill_with_new_name.id != skill_id:
+            raise HTTPException(status_code=400, detail="Another skill with this name already exists")
+            
+    updated_skill = crud.update_skill(db=db, skill_id=skill_id, skill_update=skill_update)
+    if updated_skill is None: # Should not happen if skill was found
+        raise HTTPException(status_code=500, detail="Could not update skill")
+    return updated_skill
+
+@app.delete("/admin/skills/{skill_id}", status_code=status.HTTP_204_NO_CONTENT)
+def admin_delete_skill(
+    skill_id: int, 
+    db: Session = Depends(get_db), 
+    admin_user: models.User = Depends(get_current_admin_user)
+):
+    db_skill = crud.get_skill(db, skill_id=skill_id)
+    if db_skill is None:
+        raise HTTPException(status_code=404, detail="Skill not found")
+    
+    # Add check here if skills are linked to other entities (e.g., quiz questions) before deleting
+    # For now, direct delete.
+    crud.delete_skill(db=db, skill_id=skill_id)
+    return None
+
 @app.post("/users/", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = crud.get_user_by_email(db, email=user.email)

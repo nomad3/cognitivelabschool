@@ -179,6 +179,46 @@ def create_enrollment(db: Session, enrollment: schemas.EnrollmentCreate):
     db.refresh(db_enrollment)
     return db_enrollment
 
+# Skill CRUD
+def create_skill(db: Session, skill: schemas.SkillCreate):
+    db_skill = models.Skill(**skill.dict())
+    db.add(db_skill)
+    db.commit()
+    db.refresh(db_skill)
+    return db_skill
+
+def get_skill(db: Session, skill_id: int):
+    return db.query(models.Skill).filter(models.Skill.id == skill_id).first()
+
+def get_skill_by_name(db: Session, name: str):
+    return db.query(models.Skill).filter(models.Skill.name == name).first()
+
+def get_skills(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Skill).offset(skip).limit(limit).all()
+
+def update_skill(db: Session, skill_id: int, skill_update: schemas.SkillUpdate):
+    db_skill = get_skill(db, skill_id=skill_id)
+    if not db_skill:
+        return None
+    
+    update_data = skill_update.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_skill, key, value)
+        
+    db.add(db_skill)
+    db.commit()
+    db.refresh(db_skill)
+    return db_skill
+
+def delete_skill(db: Session, skill_id: int):
+    db_skill = get_skill(db, skill_id=skill_id)
+    if not db_skill:
+        return None
+    
+    db.delete(db_skill)
+    db.commit()
+    return True
+
 def get_enrollments_by_user(db: Session, user_id: int, skip: int = 0, limit: int = 100):
     return db.query(models.Enrollment).filter(models.Enrollment.user_id == user_id).offset(skip).limit(limit).all()
 

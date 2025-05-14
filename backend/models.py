@@ -67,3 +67,13 @@ class Enrollment(Base):
 
     user = relationship("User", back_populates="enrollments")
     course = relationship("Course", back_populates="enrollments")
+
+
+class Skill(Base):
+    __tablename__ = "skills"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, index=True, nullable=False)
+    description = Column(Text, nullable=True)
+    # Relationship to link skills to lessons or quiz questions could be added later if needed
+    # e.g., through an association table or a direct ForeignKey if a lesson/question has one primary skill.

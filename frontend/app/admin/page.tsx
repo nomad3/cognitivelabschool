@@ -78,6 +78,16 @@ const AdminDashboardPage = () => {
             </button>
           </Link>
         </div>
+        
+        <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+          <h2 className="text-xl font-semibold mb-3 text-gray-700">Manage Skills</h2>
+          <p className="text-gray-600 mb-4">Define and manage skills for courses and assessments.</p>
+          <Link href="/admin/skills">
+            <button className="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-4 rounded transition-colors">
+              Manage Skills
+            </button>
+          </Link>
+        </div>
 
         <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
           <h2 className="text-xl font-semibold mb-3 text-gray-700">Platform Analytics</h2>
