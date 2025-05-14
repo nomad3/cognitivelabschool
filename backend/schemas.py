@@ -52,6 +52,11 @@ class CourseBase(BaseModel):
 class CourseCreate(CourseBase):
     instructor_id: Optional[int] = None # Allow setting instructor on creation
 
+class CourseUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    instructor_id: Optional[int] = None
+
 class Course(CourseBase):
     id: int
     instructor_id: Optional[int] = None

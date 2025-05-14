@@ -57,6 +57,30 @@ def create_course(db: Session, course: schemas.CourseCreate, instructor_id: Opti
     db.refresh(db_course)
     return db_course
 
+def update_course(db: Session, course_id: int, course_update: schemas.CourseUpdate):
+    db_course = get_course(db, course_id=course_id)
+    if not db_course:
+        return None
+
+    update_data = course_update.dict(exclude_unset=True) # Pydantic V2, or .dict(skip_defaults=True) in V1
+    for key, value in update_data.items():
+        setattr(db_course, key, value)
+    
+    db.add(db_course) # Not strictly necessary if already in session and modified, but good practice
+    db.commit()
+    db.refresh(db_course)
+    return db_course
+
+def delete_course(db: Session, course_id: int):
+    db_course = get_course(db, course_id=course_id)
+    if not db_course:
+        return None # Or raise an exception
+    
+    db.delete(db_course)
+    db.commit()
+    return True # Indicate successful deletion
+
+
 # Module CRUD
 def create_module_for_course(db: Session, module: schemas.ModuleCreate, course_id: int):
     db_module = models.Module(**module.dict(), course_id=course_id)

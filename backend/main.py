@@ -64,6 +64,11 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         raise credentials_exception
     return user
 
+async def get_current_admin_user(current_user: models.User = Depends(get_current_user)):
+    if not current_user.is_admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to perform this action")
+    return current_user
+
 @app.post("/users/", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = crud.get_user_by_email(db, email=user.email)
@@ -111,6 +116,35 @@ def read_course(course_id: int, db: Session = Depends(get_db)):
     if db_course is None:
         raise HTTPException(status_code=404, detail="Course not found")
     return db_course
+
+@app.put("/courses/{course_id}", response_model=schemas.Course)
+def update_course_details(
+    course_id: int, 
+    course_update: schemas.CourseUpdate, 
+    db: Session = Depends(get_db), 
+    admin_user: models.User = Depends(get_current_admin_user) # Ensures only admin can update
+):
+    db_course = crud.get_course(db, course_id=course_id)
+    if db_course is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
+    
+    updated_course = crud.update_course(db=db, course_id=course_id, course_update=course_update)
+    if updated_course is None: # Should not happen if course was found, but good for safety
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not update course")
+    return updated_course
+
+@app.delete("/courses/{course_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_course_by_id(
+    course_id: int, 
+    db: Session = Depends(get_db), 
+    admin_user: models.User = Depends(get_current_admin_user) # Ensures only admin can delete
+):
+    db_course = crud.get_course(db, course_id=course_id)
+    if db_course is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
+    
+    crud.delete_course(db=db, course_id=course_id)
+    return None # FastAPI will return 204 No Content
 
 # Module Endpoints
 @app.post("/courses/{course_id}/modules/", response_model=schemas.Module, status_code=status.HTTP_201_CREATED)

@@ -3,6 +3,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link'; // Import Link
 
 const AdminDashboardPage = () => {
   const router = useRouter();
@@ -51,11 +52,11 @@ const AdminDashboardPage = () => {
         <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
           <h2 className="text-xl font-semibold mb-3 text-gray-700">Manage Courses</h2>
           <p className="text-gray-600 mb-4">Create, edit, and delete courses and their content (modules, lessons).</p>
-          {/* <Link href="/admin/courses"> */}
+          <Link href="/admin/courses">
             <button className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded transition-colors">
               Go to Course Management
             </button>
-          {/* </Link> */}
+          </Link>
         </div>
 
         <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
