@@ -76,11 +76,11 @@ export default function CoursesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {courses.map((course) => (
-            <div key={course.id} className="bg-gray-800 shadow-lg rounded-lg p-6 hover:shadow-xl transition-shadow duration-300">
+            <div key={course.id} className="bg-gray-800 shadow-lg rounded-lg p-6 hover:shadow-indigo-500/40 hover:bg-gray-700/60 transition-all duration-300 transform hover:-translate-y-1">
               <h2 className="text-2xl font-semibold mb-2 text-indigo-400">{course.title}</h2>
-              <p className="text-gray-400 mb-4 line-clamp-3">{course.description || 'No description available.'}</p>
+              <p className="text-gray-400 mb-4 line-clamp-3 min-h-[3em]">{course.description || 'No description available.'}</p> {/* Added min-h for consistent card height */}
               {/* <p className="text-sm text-gray-500 mb-1">Instructor ID: {course.instructor_id || 'N/A'}</p> */}
-              <Link href={`/courses/${course.id}`} className="inline-block mt-4 px-6 py-2 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+              <Link href={`/courses/${course.id}`} className="inline-block mt-4 px-6 py-2 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-indigo-500">
                 View Course
               </Link>
             </div>
@@ -88,8 +88,11 @@ export default function CoursesPage() {
         </div>
       )}
        <div className="mt-12 text-center">
-          <Link href="/" className="text-indigo-400 hover:text-indigo-300">
-            &larr; Back to Home
+          <Link href="/" className="text-indigo-400 hover:text-indigo-300 font-semibold py-2 px-4 rounded transition-colors flex items-center justify-center max-w-xs mx-auto">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H15a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+            </svg>
+            Back to Home
           </Link>
         </div>
     </div>
