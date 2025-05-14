@@ -62,20 +62,21 @@ const AdminCoursesPage = () => {
   }, [router]);
 
   if (loading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+    return <div className="flex justify-center items-center h-screen bg-gray-900 text-white">Loading...</div>;
   }
 
   if (!isAdmin) {
     // Fallback, should be handled by redirect
     return (
-      <div className="flex flex-col justify-center items-center h-screen">
+      <div className="flex flex-col justify-center items-center h-screen bg-gray-900 text-white">
         <p className="text-xl text-red-500">Access Denied.</p>
+        <p className="text-gray-300">You do not have permission to view this page.</p>
       </div>
     );
   }
 
   if (error) {
-    return <div className="flex justify-center items-center h-screen text-red-500">Error: {error}</div>;
+    return <div className="flex justify-center items-center h-screen bg-gray-900 text-red-400">Error: {error}</div>;
   }
 
   const handleDeleteCourse = async (courseId: number) => {
@@ -105,52 +106,57 @@ const AdminCoursesPage = () => {
 
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Manage Courses</h1>
-        <Link href="/admin/courses/new">
-          <button className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded transition-colors">
-            Create New Course
-          </button>
-        </Link>
-      </div>
-
-      {courses.length === 0 ? (
-        <p>No courses found.</p>
-      ) : (
-        <div className="bg-white shadow-md rounded-lg overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instructor ID</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {courses.map((course) => (
-                <tr key={course.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{course.id}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{course.title}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{course.instructor_id ?? 'N/A'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <Link href={`/admin/courses/edit/${course.id}`}>
-                      <button className="text-indigo-600 hover:text-indigo-900 mr-3">Edit</button>
-                    </Link>
-                    <button 
-                      onClick={() => handleDeleteCourse(course.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+    <div className="min-h-screen bg-gray-900 text-white py-8">
+      <div className="container mx-auto px-4">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-bold text-indigo-400">Manage Courses</h1>
+          <Link href="/admin/courses/new">
+            <button className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded transition-colors shadow-md hover:shadow-lg">
+              Create New Course
+            </button>
+          </Link>
         </div>
-      )}
+
+        {courses.length === 0 ? (
+          <p className="text-center text-gray-400 text-lg">No courses found. Start by creating a new one!</p>
+        ) : (
+          <div className="bg-gray-800 shadow-xl rounded-lg overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-700">
+              <thead className="bg-gray-700">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">ID</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Title</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Instructor ID</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-gray-800 divide-y divide-gray-700">
+                {courses.map((course) => (
+                  <tr key={course.id} className="hover:bg-gray-700/50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100">{course.id}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{course.title}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{course.instructor_id ?? 'N/A'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <Link href={`/admin/courses/edit/${course.id}`}>
+                        <button className="text-indigo-400 hover:text-indigo-300 mr-4 font-semibold">Edit</button>
+                      </Link>
+                      <Link href={`/admin/courses/${course.id}/modules`}>
+                        <button className="text-teal-400 hover:text-teal-300 mr-4 font-semibold">Modules</button>
+                      </Link>
+                      <button 
+                        onClick={() => handleDeleteCourse(course.id)}
+                        className="text-red-500 hover:text-red-400 font-semibold"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
