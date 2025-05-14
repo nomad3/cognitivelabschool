@@ -19,7 +19,7 @@ export default function LessonPage() {
   const params = useParams();
   const courseId = params?.courseId as string;
   const lessonId = params?.lessonId as string;
-  const router = useRouter();
+  // const router = useRouter(); // Removed unused router
 
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [isLoading, setIsLoading] = useState(true);
