@@ -38,19 +38,20 @@ class Module(Base):
     order = Column(Integer, nullable=False, default=0) # To maintain module order
 
     course = relationship("Course", back_populates="modules")
-    # lessons = relationship("Lesson", back_populates="module", cascade="all, delete-orphan")
+    lessons = relationship("Lesson", back_populates="module", cascade="all, delete-orphan")
 
 
-# Placeholder for Lesson model if needed later
-# class Lesson(Base):
-#     __tablename__ = "lessons"
-#     id = Column(Integer, primary_key=True, index=True)
-#     title = Column(String, index=True, nullable=False)
-#     content = Column(Text, nullable=True) # Could be markdown, HTML, or JSON for structured content
-#     module_id = Column(Integer, ForeignKey("modules.id"), nullable=False)
-#     order = Column(Integer, nullable=False, default=0)
-#
-#     module = relationship("Module", back_populates="lessons")
+class Lesson(Base):
+    __tablename__ = "lessons"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, index=True, nullable=False)
+    content = Column(Text, nullable=True) # Could be markdown, HTML, video_url, quiz_id etc.
+    content_type = Column(String, default="text") # To interpret content: 'text', 'markdown', 'video_url', 'quiz'
+    module_id = Column(Integer, ForeignKey("modules.id"), nullable=False)
+    order = Column(Integer, nullable=False, default=0) # To maintain lesson order within a module
+
+    module = relationship("Module", back_populates="lessons")
 
 
 class Enrollment(Base):

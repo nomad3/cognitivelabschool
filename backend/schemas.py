@@ -17,6 +17,33 @@ class Module(ModuleBase):
 
     model_config = {"from_attributes": True}
 
+
+# Lesson Schemas
+class LessonBase(BaseModel):
+    title: str
+    content: Optional[str] = None
+    content_type: Optional[str] = "text"
+    order: Optional[int] = 0
+
+class LessonCreate(LessonBase):
+    pass
+
+class Lesson(LessonBase):
+    id: int
+    module_id: int
+
+    model_config = {"from_attributes": True}
+
+
+# Update Module schema to include lessons
+class Module(ModuleBase): # Re-declare to update
+    id: int
+    course_id: int
+    lessons: List[Lesson] = []
+
+    model_config = {"from_attributes": True}
+
+
 # Course Schemas
 class CourseBase(BaseModel):
     title: str

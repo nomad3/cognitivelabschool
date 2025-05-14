@@ -117,12 +117,9 @@ def read_course(course_id: int, db: Session = Depends(get_db)):
 def create_new_module_for_course(
     course_id: int, module: schemas.ModuleCreate, db: Session = Depends(get_db), current_user: schemas.User = Depends(get_current_user)
 ):
-    # Add check to ensure current_user is instructor of the course or admin
     db_course = crud.get_course(db, course_id=course_id)
     if db_course is None:
         raise HTTPException(status_code=404, detail="Course not found")
-    # Basic check: if course has an instructor, only that instructor can add modules
-    # More complex role/permission system would be needed for a real app
     if db_course.instructor_id is not None and db_course.instructor_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to add modules to this course")
     return crud.create_module_for_course(db=db, module=module, course_id=course_id)
@@ -135,20 +132,45 @@ def read_modules_for_course(course_id: int, skip: int = 0, limit: int = 10, db: 
     modules = crud.get_modules_for_course(db, course_id=course_id, skip=skip, limit=limit)
     return modules
 
+# Lesson Endpoints
+@app.post("/modules/{module_id}/lessons/", response_model=schemas.Lesson, status_code=status.HTTP_201_CREATED)
+def create_new_lesson_for_module(
+    module_id: int, lesson: schemas.LessonCreate, db: Session = Depends(get_db), current_user: schemas.User = Depends(get_current_user)
+):
+    db_module = crud.get_module(db, module_id=module_id)
+    if db_module is None:
+        raise HTTPException(status_code=404, detail="Module not found")
+    db_course = crud.get_course(db, course_id=db_module.course_id)
+    if db_course.instructor_id is not None and db_course.instructor_id != current_user.id: 
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to add lessons to this module")
+    return crud.create_lesson_for_module(db=db, lesson=lesson, module_id=module_id)
+
+@app.get("/modules/{module_id}/lessons/", response_model=List[schemas.Lesson])
+def read_lessons_for_module(module_id: int, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    db_module = crud.get_module(db, module_id=module_id)
+    if db_module is None:
+        raise HTTPException(status_code=404, detail="Module not found")
+    lessons = crud.get_lessons_for_module(db, module_id=module_id, skip=skip, limit=limit)
+    return lessons
+
+@app.get("/lessons/{lesson_id}", response_model=schemas.Lesson)
+def read_lesson(lesson_id: int, db: Session = Depends(get_db)):
+    db_lesson = crud.get_lesson(db, lesson_id=lesson_id)
+    if db_lesson is None:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+    return db_lesson
+
 # Enrollment Endpoints
 @app.post("/enrollments/", response_model=schemas.Enrollment, status_code=status.HTTP_201_CREATED)
 def enroll_in_course(enrollment: schemas.EnrollmentCreate, db: Session = Depends(get_db), current_user: schemas.User = Depends(get_current_user)):
     if current_user.id != enrollment.user_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Cannot enroll other users")
-    
     db_course = crud.get_course(db, course_id=enrollment.course_id)
     if db_course is None:
         raise HTTPException(status_code=404, detail="Course not found")
-    
     existing_enrollment = crud.get_enrollment_by_user_and_course(db, user_id=current_user.id, course_id=enrollment.course_id)
     if existing_enrollment:
         raise HTTPException(status_code=400, detail="User already enrolled in this course")
-        
     return crud.create_enrollment(db=db, enrollment=enrollment)
 
 @app.get("/users/me/enrollments/", response_model=List[schemas.Enrollment])
@@ -158,38 +180,46 @@ def read_my_enrollments(db: Session = Depends(get_db), current_user: schemas.Use
 # Temp endpoint to seed data
 @app.post("/seed_data/", status_code=status.HTTP_201_CREATED)
 def seed_data(db: Session = Depends(get_db)):
-    # Check if data already exists to prevent duplicates
     courses_exist = db.query(models.Course).first()
     if courses_exist:
         raise HTTPException(status_code=400, detail="Data already seeded")
 
-    # Create a sample instructor/user if none exists or use an existing one
     instructor_email = "instructor@example.com"
     instructor = crud.get_user_by_email(db, email=instructor_email)
     if not instructor:
         instructor_user_in = schemas.UserCreate(email=instructor_email, password="securepassword", full_name="Dr. Instructor")
         instructor = crud.create_user(db, instructor_user_in)
 
-    # Seed Courses
     course1_in = schemas.CourseCreate(title="Introduction to AI", description="Learn the fundamentals of Artificial Intelligence.", instructor_id=instructor.id)
     course1 = crud.create_course(db, course=course1_in, instructor_id=instructor.id)
-
     course2_in = schemas.CourseCreate(title="Advanced Python for AI", description="Deep dive into Python programming for AI applications.", instructor_id=instructor.id)
     course2 = crud.create_course(db, course=course2_in, instructor_id=instructor.id)
-    
     course3_in = schemas.CourseCreate(title="Natural Language Processing", description="Understand and build NLP models.", instructor_id=instructor.id)
     course3 = crud.create_course(db, course=course3_in, instructor_id=instructor.id)
 
-
     # Seed Modules for Course 1
-    module1_c1_in = schemas.ModuleCreate(title="Module 1: What is AI?", description="History and basic concepts of AI.", order=1)
-    crud.create_module_for_course(db, module=module1_c1_in, course_id=course1.id)
+    module1_c1_schema = schemas.ModuleCreate(title="Module 1: What is AI?", description="History and basic concepts of AI.", order=1)
+    module1_c1_db = crud.create_module_for_course(db, module=module1_c1_schema, course_id=course1.id)
     
-    module2_c1_in = schemas.ModuleCreate(title="Module 2: Machine Learning Basics", description="Introduction to ML algorithms.", order=2)
-    crud.create_module_for_course(db, module=module2_c1_in, course_id=course1.id)
+    module2_c1_schema = schemas.ModuleCreate(title="Module 2: Machine Learning Basics", description="Introduction to ML algorithms.", order=2)
+    module2_c1_db = crud.create_module_for_course(db, module=module2_c1_schema, course_id=course1.id)
 
     # Seed Modules for Course 2
-    module1_c2_in = schemas.ModuleCreate(title="Module 1: Advanced Data Structures", description="Using advanced data structures in Python.", order=1)
-    crud.create_module_for_course(db, module=module1_c2_in, course_id=course2.id)
+    module1_c2_schema = schemas.ModuleCreate(title="Module 1: Advanced Data Structures", description="Using advanced data structures in Python.", order=1)
+    module1_c2_db = crud.create_module_for_course(db, module=module1_c2_schema, course_id=course2.id)
 
-    return {"message": "Sample data seeded successfully!"}
+    # Seed Lessons for Module 1 of Course 1
+    lesson1_m1_c1 = schemas.LessonCreate(title="Lesson 1.1: Introduction to AI Concepts", content="This lesson covers the core ideas behind AI.", order=1, content_type="text")
+    crud.create_lesson_for_module(db, lesson=lesson1_m1_c1, module_id=module1_c1_db.id)
+    lesson2_m1_c1 = schemas.LessonCreate(title="Lesson 1.2: Types of AI", content="Exploring narrow, general, and super AI.", order=2, content_type="text")
+    crud.create_lesson_for_module(db, lesson=lesson2_m1_c1, module_id=module1_c1_db.id)
+
+    # Seed Lessons for Module 2 of Course 1
+    lesson1_m2_c1 = schemas.LessonCreate(title="Lesson 2.1: Supervised Learning", content="Understanding supervised machine learning.", order=1, content_type="text")
+    crud.create_lesson_for_module(db, lesson=lesson1_m2_c1, module_id=module2_c1_db.id)
+    
+    # Seed Lessons for Module 1 of Course 2
+    lesson1_m1_c2 = schemas.LessonCreate(title="Lesson 1.1: Python Lists and Dictionaries", content="Deep dive into lists and dicts for performance.", order=1, content_type="text")
+    crud.create_lesson_for_module(db, lesson=lesson1_m1_c2, module_id=module1_c2_db.id)
+
+    return {"message": "Sample data seeded successfully with courses, modules, and lessons!"}

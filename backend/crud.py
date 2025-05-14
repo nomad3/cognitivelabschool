@@ -61,7 +61,24 @@ def create_module_for_course(db: Session, module: schemas.ModuleCreate, course_i
     return db_module
 
 def get_modules_for_course(db: Session, course_id: int, skip: int = 0, limit: int = 100):
-    return db.query(models.Module).filter(models.Module.course_id == course_id).offset(skip).limit(limit).all()
+    return db.query(models.Module).filter(models.Module.course_id == course_id).order_by(models.Module.order).offset(skip).limit(limit).all()
+
+def get_module(db: Session, module_id: int):
+    return db.query(models.Module).filter(models.Module.id == module_id).first()
+
+# Lesson CRUD
+def create_lesson_for_module(db: Session, lesson: schemas.LessonCreate, module_id: int):
+    db_lesson = models.Lesson(**lesson.dict(), module_id=module_id)
+    db.add(db_lesson)
+    db.commit()
+    db.refresh(db_lesson)
+    return db_lesson
+
+def get_lessons_for_module(db: Session, module_id: int, skip: int = 0, limit: int = 100):
+    return db.query(models.Lesson).filter(models.Lesson.module_id == module_id).order_by(models.Lesson.order).offset(skip).limit(limit).all()
+
+def get_lesson(db: Session, lesson_id: int):
+    return db.query(models.Lesson).filter(models.Lesson.id == lesson_id).first()
 
 
 # Enrollment CRUD
