@@ -108,11 +108,11 @@ const AdminCoursesPage = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Manage Courses</h1>
-        {/* <Link href="/admin/courses/new"> */}
+        <Link href="/admin/courses/new">
           <button className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded transition-colors">
             Create New Course
           </button>
-        {/* </Link> */}
+        </Link>
       </div>
 
       {courses.length === 0 ? (
@@ -135,9 +135,9 @@ const AdminCoursesPage = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{course.title}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{course.instructor_id ?? 'N/A'}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    {/* <Link href={`/admin/courses/edit/${course.id}`}> */}
+                    <Link href={`/admin/courses/edit/${course.id}`}>
                       <button className="text-indigo-600 hover:text-indigo-900 mr-3">Edit</button>
-                    {/* </Link> */}
+                    </Link>
                     <button 
                       onClick={() => handleDeleteCourse(course.id)}
                       className="text-red-600 hover:text-red-900"
