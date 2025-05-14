@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation'; // Removed useRouter
 import Link from 'next/link';
 // Consider a markdown renderer if content_type is markdown
 // import ReactMarkdown from 'react-markdown'; 
