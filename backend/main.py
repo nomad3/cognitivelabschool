@@ -80,6 +80,27 @@ def admin_read_users(
     users = crud.get_users(db, skip=skip, limit=limit)
     return users
 
+@app.put("/admin/users/{user_id}", response_model=schemas.User)
+def admin_update_user_details(
+    user_id: int,
+    user_update: schemas.UserUpdateAdmin,
+    db: Session = Depends(get_db),
+    admin_user: models.User = Depends(get_current_admin_user)
+):
+    db_user = crud.get_user(db, user_id=user_id)
+    if db_user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    
+    # Prevent admin from accidentally un-admining themselves if they are the only admin?
+    # Or changing their own active status in a way that locks them out?
+    # For now, this is not handled, but could be a consideration.
+    # Also, ensure not to update email or password here. UserUpdateAdmin schema handles this.
+
+    updated_user = crud.update_user_by_admin(db=db, user_id=user_id, user_update=user_update)
+    if updated_user is None: # Should not happen if user was found
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not update user")
+    return updated_user
+
 @app.post("/users/", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = crud.get_user_by_email(db, email=user.email)

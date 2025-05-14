@@ -93,6 +93,10 @@ class User(UserBase):
 
     model_config = {"from_attributes": True}
 
+class UserUpdateAdmin(BaseModel):
+    full_name: Optional[str] = None
+    is_active: Optional[bool] = None
+    is_admin: Optional[bool] = None
 
 # Enrollment Schemas
 class EnrollmentBase(BaseModel):
