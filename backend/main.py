@@ -84,7 +84,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     access_token = create_access_token(
         data={"sub": user.email}, expires_delta=access_token_expires
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {"access_token": access_token, "token_type": "bearer", "is_admin": user.is_admin}
 
 @app.get("/users/me/", response_model=schemas.User)
 async def read_users_me(current_user: schemas.User = Depends(get_current_user)):
@@ -213,14 +213,35 @@ def mark_lesson_as_incomplete(
 @app.post("/seed_data/", status_code=status.HTTP_201_CREATED)
 def seed_data(db: Session = Depends(get_db)):
     courses_exist = db.query(models.Course).first()
-    if courses_exist:
-        raise HTTPException(status_code=400, detail="Data already seeded")
+    users_exist = db.query(models.User).first() # Check if any user exists, implies seeding might have run
 
+    if courses_exist or users_exist: # If either courses or users exist, assume data (or at least users) might be seeded
+        # More robust check: query for a specific admin user or a specific course if needed
+        # For now, if any user exists, we prevent re-seeding to avoid duplicate user errors.
+        # If only courses exist but no users (unlikely scenario with current seed logic), this would also prevent re-seed.
+        # This is a simplification. A more robust seeding would check for specific sentinel values.
+        admin_user_check = crud.get_user_by_email(db, email="admin@example.com")
+        if admin_user_check and courses_exist:
+             raise HTTPException(status_code=400, detail="Data already seeded (admin user and courses exist).")
+        # Allow seeding if admin user doesn't exist, even if other users/courses might (e.g. from partial previous seed)
+        # This is still a bit simplistic, ideally seed scripts are idempotent or have clear "already run" markers.
+
+    # Create Admin User
+    admin_email = "admin@example.com"
+    admin_user = crud.get_user_by_email(db, email=admin_email)
+    if not admin_user:
+        admin_user_in = schemas.UserCreate(email=admin_email, password="adminpassword", full_name="Admin User", is_admin=True)
+        admin_user = crud.create_user(db, admin_user_in)
+
+    # Create Instructor User (if not exists)
     instructor_email = "instructor@example.com"
     instructor = crud.get_user_by_email(db, email=instructor_email)
     if not instructor:
-        instructor_user_in = schemas.UserCreate(email=instructor_email, password="securepassword", full_name="Dr. Instructor")
+        instructor_user_in = schemas.UserCreate(email=instructor_email, password="securepassword", full_name="Dr. Instructor", is_admin=False) # Explicitly False
         instructor = crud.create_user(db, instructor_user_in)
+    
+    # Ensure instructor_id for courses is correctly assigned to the non-admin instructor
+    # If courses are to be created by admin, then use admin_user.id
 
     course1_in = schemas.CourseCreate(title="Introduction to AI", description="Learn the fundamentals of Artificial Intelligence.", instructor_id=instructor.id)
     course1 = crud.create_course(db, course=course1_in, instructor_id=instructor.id)

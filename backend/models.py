@@ -1,6 +1,7 @@
 from sqlalchemy import Boolean, Column, Integer, String, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from database import Base # Changed to absolute import
+from datetime import datetime
 
 class User(Base):
     __tablename__ = "users"
@@ -10,6 +11,7 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
     full_name = Column(String, index=True, nullable=True)
+    is_admin = Column(Boolean, default=False) # Added for admin functionality
     # Add other fields like role, etc. as needed
 
     enrollments = relationship("Enrollment", back_populates="user")
@@ -65,6 +67,3 @@ class Enrollment(Base):
 
     user = relationship("User", back_populates="enrollments")
     course = relationship("Course", back_populates="enrollments")
-
-# Need to import datetime for Enrollment model default
-from datetime import datetime

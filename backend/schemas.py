@@ -66,10 +66,12 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
+    is_admin: bool | None = False
 
 class User(UserBase):
     id: int
     is_active: bool
+    is_admin: bool
     # courses: List[Course] = [] # To show courses created by this user if they are an instructor
     # enrollments: List['Enrollment'] = [] # Forward reference for Enrollment
 
@@ -117,6 +119,7 @@ class Enrollment(EnrollmentBase):
 class Token(BaseModel):
     access_token: str
     token_type: str
+    is_admin: bool # Added to inform frontend if user is admin
 
 class TokenData(BaseModel):
     email: Optional[str] = None

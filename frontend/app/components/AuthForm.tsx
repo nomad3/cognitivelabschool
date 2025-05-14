@@ -51,7 +51,8 @@ export default function AuthForm({ mode }: AuthFormProps) {
 
       if (mode === 'login') {
         // Store the token (e.g., in localStorage or context)
-        localStorage.setItem('accessToken', data.access_token);
+        localStorage.setItem('access_token', data.access_token); // Changed key to access_token
+        localStorage.setItem('is_admin', data.is_admin); // Store is_admin status
         // Redirect to a protected page or dashboard
         router.push('/'); // Or a dashboard page
       } else {
