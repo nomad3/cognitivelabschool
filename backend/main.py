@@ -175,7 +175,39 @@ def enroll_in_course(enrollment: schemas.EnrollmentCreate, db: Session = Depends
 
 @app.get("/users/me/enrollments/", response_model=List[schemas.Enrollment])
 def read_my_enrollments(db: Session = Depends(get_db), current_user: schemas.User = Depends(get_current_user), skip: int = 0, limit: int = 10):
-    return crud.get_enrollments_by_user(db, user_id=current_user.id, skip=skip, limit=limit)
+    enrollments = crud.get_enrollments_by_user(db, user_id=current_user.id, skip=skip, limit=limit)
+    # Use the custom from_orm in the schema to parse completed_lessons
+    return [schemas.Enrollment.from_orm(e) for e in enrollments]
+
+@app.post("/enrollments/{enrollment_id}/lessons/{lesson_id}/complete", response_model=schemas.Enrollment)
+def mark_lesson_as_complete(
+    enrollment_id: int, lesson_id: int, db: Session = Depends(get_db), current_user: schemas.User = Depends(get_current_user)
+):
+    db_enrollment = db.query(models.Enrollment).filter(models.Enrollment.id == enrollment_id).first()
+    if not db_enrollment:
+        raise HTTPException(status_code=404, detail="Enrollment not found")
+    if db_enrollment.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to update this enrollment")
+    
+    updated_enrollment = crud.mark_lesson_complete(db, enrollment_id=enrollment_id, lesson_id=lesson_id)
+    if not updated_enrollment: # Should not happen if enrollment was found, but good practice
+        raise HTTPException(status_code=404, detail="Failed to mark lesson complete")
+    return schemas.Enrollment.from_orm(updated_enrollment)
+
+@app.post("/enrollments/{enrollment_id}/lessons/{lesson_id}/incomplete", response_model=schemas.Enrollment)
+def mark_lesson_as_incomplete(
+    enrollment_id: int, lesson_id: int, db: Session = Depends(get_db), current_user: schemas.User = Depends(get_current_user)
+):
+    db_enrollment = db.query(models.Enrollment).filter(models.Enrollment.id == enrollment_id).first()
+    if not db_enrollment:
+        raise HTTPException(status_code=404, detail="Enrollment not found")
+    if db_enrollment.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to update this enrollment")
+
+    updated_enrollment = crud.mark_lesson_incomplete(db, enrollment_id=enrollment_id, lesson_id=lesson_id)
+    if not updated_enrollment: # Should not happen if enrollment was found
+        raise HTTPException(status_code=404, detail="Failed to mark lesson incomplete")
+    return schemas.Enrollment.from_orm(updated_enrollment)
 
 # Temp endpoint to seed data
 @app.post("/seed_data/", status_code=status.HTTP_201_CREATED)

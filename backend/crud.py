@@ -92,5 +92,33 @@ def create_enrollment(db: Session, enrollment: schemas.EnrollmentCreate):
 def get_enrollments_by_user(db: Session, user_id: int, skip: int = 0, limit: int = 100):
     return db.query(models.Enrollment).filter(models.Enrollment.user_id == user_id).offset(skip).limit(limit).all()
 
+import json # For handling completed_lessons JSON string
+
 def get_enrollment_by_user_and_course(db: Session, user_id: int, course_id: int):
     return db.query(models.Enrollment).filter(models.Enrollment.user_id == user_id, models.Enrollment.course_id == course_id).first()
+
+def mark_lesson_complete(db: Session, enrollment_id: int, lesson_id: int):
+    db_enrollment = db.query(models.Enrollment).filter(models.Enrollment.id == enrollment_id).first()
+    if not db_enrollment:
+        return None
+    
+    completed_lessons_list = json.loads(db_enrollment.completed_lessons)
+    if lesson_id not in completed_lessons_list:
+        completed_lessons_list.append(lesson_id)
+        db_enrollment.completed_lessons = json.dumps(completed_lessons_list)
+        db.commit()
+        db.refresh(db_enrollment)
+    return db_enrollment
+
+def mark_lesson_incomplete(db: Session, enrollment_id: int, lesson_id: int):
+    db_enrollment = db.query(models.Enrollment).filter(models.Enrollment.id == enrollment_id).first()
+    if not db_enrollment:
+        return None
+        
+    completed_lessons_list = json.loads(db_enrollment.completed_lessons)
+    if lesson_id in completed_lessons_list:
+        completed_lessons_list.remove(lesson_id)
+        db_enrollment.completed_lessons = json.dumps(completed_lessons_list)
+        db.commit()
+        db.refresh(db_enrollment)
+    return db_enrollment

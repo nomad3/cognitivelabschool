@@ -61,7 +61,7 @@ class Enrollment(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
     enrolled_at = Column(String, default=lambda: datetime.utcnow().isoformat()) # Using string for simplicity with SQLite
-    # progress = Column(Integer, default=0) # Percentage or number of completed lessons
+    completed_lessons = Column(Text, default="[]") # Store as JSON string list of lesson IDs
 
     user = relationship("User", back_populates="enrollments")
     course = relationship("Course", back_populates="enrollments")

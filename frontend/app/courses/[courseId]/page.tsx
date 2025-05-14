@@ -34,6 +34,7 @@ interface EnrollmentResponse {
     user_id: number;
     course_id: number;
     enrolled_at: string;
+    completed_lessons: number[]; // Added completed_lessons
 }
 
 export default function CourseDetailPage() {
@@ -45,61 +46,61 @@ export default function CourseDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEnrolled, setIsEnrolled] = useState(false);
+  const [currentEnrollment, setCurrentEnrollment] = useState<EnrollmentResponse | null>(null);
   const [enrollmentError, setEnrollmentError] = useState<string | null>(null);
   const [isEnrolling, setIsEnrolling] = useState(false);
 
-
-  useEffect(() => {
+  const fetchCourseAndEnrollmentDetails = async () => {
     if (!courseId) return;
+    setIsLoading(true);
+    setError(null);
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
-    async function fetchCourseDetails() {
-      setIsLoading(true);
-      setError(null);
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
-      try {
-        const res = await fetch(`${backendUrl}/courses/${courseId}`);
-        if (!res.ok) {
-          if (res.status === 404) throw new Error('Course not found.');
-          throw new Error(`Failed to fetch course details: ${res.statusText}`);
-        }
-        const data = await res.json();
-        setCourse(data);
-      } catch (err) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError("An unknown error occurred");
-        }
-      } finally {
-        setIsLoading(false);
+    try {
+      // Fetch course details
+      const courseRes = await fetch(`${backendUrl}/courses/${courseId}`);
+      if (!courseRes.ok) {
+        if (courseRes.status === 404) throw new Error('Course not found.');
+        throw new Error(`Failed to fetch course details: ${courseRes.statusText}`);
       }
-    }
-    
-    async function checkEnrollmentStatus() {
-        const token = localStorage.getItem('accessToken');
-        if (!token) return; // Not logged in, so can't be enrolled
+      const courseData = await courseRes.json();
+      setCourse(courseData);
 
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
-        try {
-            // This endpoint needs to be created: /enrollments/course/{course_id}/status or similar
-            // For now, we'll fetch all user enrollments and check
-            const res = await fetch(`${backendUrl}/users/me/enrollments/`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const enrollments: EnrollmentResponse[] = await res.json();
-                const numericCourseId = parseInt(courseId, 10);
-                if (enrollments.some(e => e.course_id === numericCourseId)) {
-                    setIsEnrolled(true);
-                }
-            }
-        } catch (e) {
-            console.error("Failed to check enrollment status", e);
+      // Check enrollment status
+      const token = localStorage.getItem('accessToken');
+      if (token) {
+        const enrollmentsRes = await fetch(`${backendUrl}/users/me/enrollments/`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (enrollmentsRes.ok) {
+          const enrollments: EnrollmentResponse[] = await enrollmentsRes.json();
+          const numericCourseId = parseInt(courseId, 10);
+          const userEnrollment = enrollments.find(e => e.course_id === numericCourseId);
+          if (userEnrollment) {
+            setIsEnrolled(true);
+            setCurrentEnrollment(userEnrollment);
+          } else {
+            setIsEnrolled(false);
+            setCurrentEnrollment(null);
+          }
         }
+      } else {
+        setIsEnrolled(false);
+        setCurrentEnrollment(null);
+      }
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("An unknown error occurred");
+      }
+    } finally {
+      setIsLoading(false);
     }
-
-    fetchCourseDetails();
-    checkEnrollmentStatus();
+  };
+  
+  useEffect(() => {
+    fetchCourseAndEnrollmentDetails();
   }, [courseId]);
 
   const handleEnroll = async () => {
@@ -142,6 +143,47 @@ export default function CourseDetailPage() {
         }
     } finally {
         setIsEnrolling(false);
+    }
+  };
+
+  const handleToggleLessonComplete = async (lessonId: number) => {
+    if (!currentEnrollment) return;
+
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      router.push('/login');
+      return;
+    }
+
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+    const isCompleted = currentEnrollment.completed_lessons.includes(lessonId);
+    const endpoint = isCompleted 
+      ? `${backendUrl}/enrollments/${currentEnrollment.id}/lessons/${lessonId}/incomplete`
+      : `${backendUrl}/enrollments/${currentEnrollment.id}/lessons/${lessonId}/complete`;
+
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.detail || 'Failed to update lesson status.');
+      }
+      const updatedEnrollment: EnrollmentResponse = await res.json();
+      setCurrentEnrollment(updatedEnrollment); 
+      // Optionally, show a success message
+    } catch (err) {
+      if (err instanceof Error) {
+        // setLessonCompletionError(err.message); // TODO: Add state for this error
+        console.error("Failed to toggle lesson completion:", err.message);
+      } else {
+        // setLessonCompletionError("An unknown error occurred.");
+        console.error("An unknown error occurred while toggling lesson completion.");
+      }
     }
   };
 
@@ -195,11 +237,18 @@ export default function CourseDetailPage() {
                   <ul className="space-y-3">
                     {module.lessons.sort((a,b) => a.order - b.order).map((lesson) => (
                       <li key={lesson.id} className="bg-gray-700 p-3 rounded-md hover:bg-gray-600 transition-colors">
-                        <Link href={`/courses/${courseId}/lessons/${lesson.id}`} className="block">
-                          <span className="text-lg text-indigo-300">{lesson.title}</span>
-                          {/* Basic content type indicator, can be enhanced */}
+                        <Link href={`/courses/${courseId}/lessons/${lesson.id}`} className="flex-grow block">
+                          <span className={`text-lg ${currentEnrollment?.completed_lessons?.includes(lesson.id) ? 'text-green-400 line-through' : 'text-indigo-300'}`}>{lesson.title}</span>
                           <span className="ml-2 text-xs bg-gray-600 text-gray-300 px-2 py-0.5 rounded-full">{lesson.content_type}</span>
                         </Link>
+                        {isEnrolled && currentEnrollment && (
+                           <button 
+                             onClick={() => handleToggleLessonComplete(lesson.id)}
+                             className={`ml-4 px-3 py-1 text-xs rounded-md ${currentEnrollment.completed_lessons?.includes(lesson.id) ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-green-500 hover:bg-green-600'} text-white`}
+                           >
+                             {currentEnrollment.completed_lessons?.includes(lesson.id) ? 'Undo' : 'Done'}
+                           </button>
+                         )}
                       </li>
                     ))}
                   </ul>

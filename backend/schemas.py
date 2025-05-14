@@ -84,13 +84,31 @@ class EnrollmentBase(BaseModel):
 class EnrollmentCreate(EnrollmentBase):
     pass
 
+import json # For parsing completed_lessons
+
 class Enrollment(EnrollmentBase):
     id: int
-    enrolled_at: datetime # Changed from string to datetime for Pydantic validation
-    user: User # Nested User schema
-    course: Course # Nested Course schema
+    enrolled_at: datetime 
+    user: User 
+    course: Course 
+    completed_lessons: List[int] # Will be a list of lesson IDs
 
     model_config = {"from_attributes": True}
+
+    @classmethod
+    def from_orm(cls, obj: any) -> "Enrollment":
+        # Custom from_orm to parse completed_lessons from JSON string to list
+        data = super().from_orm(obj).dict()
+        if isinstance(obj.completed_lessons, str):
+            try:
+                data['completed_lessons'] = json.loads(obj.completed_lessons)
+            except json.JSONDecodeError:
+                data['completed_lessons'] = [] # Default to empty list on error
+        elif isinstance(obj.completed_lessons, list): # Already a list (e.g. if directly set)
+             data['completed_lessons'] = obj.completed_lessons
+        else:
+            data['completed_lessons'] = []
+        return cls(**data)
 
 # Update User schema to resolve forward reference if needed, or handle via separate endpoint
 # User.update_forward_refs() # If Enrollment was a forward reference string
