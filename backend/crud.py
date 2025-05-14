@@ -179,6 +179,53 @@ def create_enrollment(db: Session, enrollment: schemas.EnrollmentCreate):
     db.refresh(db_enrollment)
     return db_enrollment
 
+# Personalized Study Plan
+DEFAULT_PROFICIENCY_THRESHOLD = 70
+
+def generate_study_plan(db: Session, user_id: int, proficiency_threshold: int = DEFAULT_PROFICIENCY_THRESHOLD) -> schemas.StudyPlanResponse:
+    user_skills = get_user_skills_by_user(db, user_id=user_id, limit=1000) # Get all skills for the user
+
+    low_proficiency_skills = [us for us in user_skills if us.proficiency_score < proficiency_threshold]
+
+    recommendations: List[schemas.StudyRecommendationItem] = []
+    recommended_ids = set() # To avoid duplicate course/module recommendations
+
+    for user_skill in low_proficiency_skills:
+        skill_id = user_skill.skill_id
+        
+        # Find courses associated with this skill
+        courses_for_skill = db.query(models.Course).filter(models.Course.associated_skills.any(id=skill_id)).all()
+        for course in courses_for_skill:
+            if ("course", course.id) not in recommended_ids:
+                recommendations.append(schemas.StudyRecommendationItem(
+                    id=course.id,
+                    title=course.title,
+                    type="course",
+                    description=course.description
+                ))
+                recommended_ids.add(("course", course.id))
+
+        # Find modules associated with this skill
+        # We should also ensure the module is not part of an already recommended course for this skill,
+        # or decide if module-level recommendations are fine even if the parent course is suggested.
+        # For now, let's add modules even if their parent course is already recommended,
+        # as they offer more granular suggestions.
+        modules_for_skill = db.query(models.Module).filter(models.Module.associated_skills.any(id=skill_id)).all()
+        for module in modules_for_skill:
+            if ("module", module.id) not in recommended_ids:
+                # Optional: Check if user is enrolled in the course of this module
+                # Optional: Check if module's parent course is already recommended.
+                # For now, adding module directly.
+                recommendations.append(schemas.StudyRecommendationItem(
+                    id=module.id,
+                    title=module.title,
+                    type="module",
+                    description=module.description
+                ))
+                recommended_ids.add(("module", module.id))
+                
+    return schemas.StudyPlanResponse(recommendations=recommendations)
+
 # Skill CRUD
 def create_skill(db: Session, skill: schemas.SkillCreate):
     db_skill = models.Skill(**skill.dict())

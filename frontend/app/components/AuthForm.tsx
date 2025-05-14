@@ -19,8 +19,8 @@ export default function AuthForm({ mode }: AuthFormProps) {
     setIsLoading(true);
     setError(null);
 
-    const endpoint = mode === 'register' ? '/users/' : '/token';
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+    // Use relative paths for API calls to leverage Next.js rewrites
+    const endpoint = mode === 'register' ? '/api/users/' : '/api/token';
     
     let body;
     let headers: HeadersInit = { 'Content-Type': 'application/json' };
@@ -36,7 +36,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
     }
 
     try {
-      const res = await fetch(`${backendUrl}${endpoint}`, {
+      const res = await fetch(endpoint, { // Use relative endpoint directly
         method: 'POST',
         headers: headers,
         body: body,
@@ -51,8 +51,8 @@ export default function AuthForm({ mode }: AuthFormProps) {
 
       if (mode === 'login') {
         // Store the token (e.g., in localStorage or context)
-        localStorage.setItem('access_token', data.access_token); // Changed key to access_token
-        localStorage.setItem('is_admin', data.is_admin); // Store is_admin status
+        localStorage.setItem('accessToken', data.access_token); // Standardize to camelCase 'accessToken'
+        localStorage.setItem('isAdmin', data.is_admin ? 'true' : 'false'); // Store is_admin status as string
         // Redirect to a protected page or dashboard
         router.push('/'); // Or a dashboard page
       } else {

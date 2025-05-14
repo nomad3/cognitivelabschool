@@ -99,6 +99,11 @@ export default function Home() {
           <Link href="/courses" className="px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
             Browse Courses
           </Link>
+          {isAuthenticated && (
+            <Link href="/study-plan" className="ml-4 px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700">
+              My Study Plan
+            </Link>
+          )}
         </div>
       </div>
     </main>

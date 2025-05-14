@@ -45,6 +45,21 @@ The Minimum Viable Product (MVP) focuses on core functionalities. Below is the s
     *   Backend: API endpoints to mark a lesson as complete or incomplete for an enrolled user.
     *   Frontend: Course detail page shows "Done"/"Undo" buttons for lessons if enrolled.
     *   Frontend: Completed lessons are visually distinguished (e.g., strikethrough text).
+7.  **Skill Management & Assessment:**
+    *   Backend models for `Skill` (defining skills) and `UserSkill` (tracking user proficiency in skills).
+    *   Full admin CRUD interfaces (UI and API) for managing `Skill` entities.
+    *   Admins can associate `Skill` entities with `Course` and `Module` entities via dedicated API endpoints and UI sections.
+    *   Admins can designate lessons as 'quiz' type. Quiz content (questions, answers, associated skill IDs) is stored as JSON in `Lesson.content`.
+    *   Student-facing UI for taking quizzes.
+    *   Backend API endpoint (`/lessons/{lesson_id}/submit_quiz`) for quiz submission. This endpoint evaluates answers, calculates overall and skill-based scores, and updates the `UserSkill` proficiency for the relevant skills.
+    *   Students can view immediate quiz results, including skill-based scores.
+8.  **Personalized Study Plan (Foundation):**
+    *   Backend logic identifies skills where the user has low proficiency.
+    *   Recommends courses or modules associated with these low-proficiency skills (based on `Course.associated_skills` and `Module.associated_skills`).
+    *   New API endpoint `GET /users/me/study-plan` provides these recommendations.
+    *   New user-facing page (`/study-plan`) displays the personalized study plan to the logged-in user. If no recommendations are applicable (e.g., for a new user or a user proficient in all assessed skills), a relevant message is shown.
+9.  **Code Quality:**
+    *   Addressed various ESLint and TypeScript errors in frontend components.
 
 ### Partially Implemented / To Be Implemented for MVP:
 1.  **Enhanced Lesson Content Display (Frontend):**

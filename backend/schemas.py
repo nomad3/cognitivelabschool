@@ -18,6 +18,29 @@ class Skill(SkillBase):
     id: int
     model_config = {"from_attributes": True}
 
+# User Schemas
+class UserBase(BaseModel):
+    email: str
+    full_name: Optional[str] = None
+
+class UserCreate(UserBase):
+    password: str
+    is_admin: Optional[bool] = False
+
+class User(UserBase):
+    id: int
+    is_active: bool
+    is_admin: bool
+    # courses: List[Course] = [] # To show courses created by this user if they are an instructor
+    # enrollments: List['Enrollment'] = [] # Forward reference for Enrollment
+
+    model_config = {"from_attributes": True}
+
+class UserUpdateAdmin(BaseModel):
+    full_name: Optional[str] = None
+    is_active: Optional[bool] = None
+    is_admin: Optional[bool] = None
+
 # UserSkill Schemas (for user skill proficiency)
 class UserSkillBase(BaseModel):
     user_id: int
@@ -127,29 +150,6 @@ class Course(CourseBase):
 
     model_config = {"from_attributes": True}
 
-# User Schemas
-class UserBase(BaseModel):
-    email: str
-    full_name: Optional[str] = None
-
-class UserCreate(UserBase):
-    password: str
-    is_admin: bool | None = False
-
-class User(UserBase):
-    id: int
-    is_active: bool
-    is_admin: bool
-    # courses: List[Course] = [] # To show courses created by this user if they are an instructor
-    # enrollments: List['Enrollment'] = [] # Forward reference for Enrollment
-
-    model_config = {"from_attributes": True}
-
-class UserUpdateAdmin(BaseModel):
-    full_name: Optional[str] = None
-    is_active: Optional[bool] = None
-    is_admin: Optional[bool] = None
-
 # Enrollment Schemas
 class EnrollmentBase(BaseModel):
     user_id: int
@@ -186,6 +186,18 @@ class Enrollment(EnrollmentBase):
 
 # Update User schema to resolve forward reference if needed, or handle via separate endpoint
 # User.update_forward_refs() # If Enrollment was a forward reference string
+
+
+# Study Plan Schemas
+class StudyRecommendationItem(BaseModel):
+    id: int
+    title: str
+    type: str  # "course" or "module"
+    description: Optional[str] = None # Optional: could be course/module description
+
+class StudyPlanResponse(BaseModel):
+    recommendations: List[StudyRecommendationItem]
+    # generated_at: datetime # Optional: timestamp of plan generation
 
 # Token Schemas
 class Token(BaseModel):

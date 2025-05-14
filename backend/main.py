@@ -524,6 +524,23 @@ def read_my_enrollments(db: Session = Depends(get_db), current_user: schemas.Use
     # Use the custom from_orm in the schema to parse completed_lessons
     return [schemas.Enrollment.from_orm(e) for e in enrollments]
 
+@app.get("/users/me/study-plan", response_model=schemas.StudyPlanResponse)
+async def get_my_study_plan(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """
+    Generates and returns a personalized study plan for the current user
+    based on their skill proficiencies.
+    """
+    # Optional: Allow passing proficiency_threshold as a query parameter
+    study_plan = crud.generate_study_plan(db=db, user_id=current_user.id)
+    if not study_plan.recommendations:
+        # You could return an empty list or a specific message
+        # For now, returning the empty list as per StudyPlanResponse schema
+        pass
+    return study_plan
+
 @app.post("/enrollments/{enrollment_id}/lessons/{lesson_id}/complete", response_model=schemas.Enrollment)
 def mark_lesson_as_complete(
     enrollment_id: int, lesson_id: int, db: Session = Depends(get_db), current_user: schemas.User = Depends(get_current_user)
