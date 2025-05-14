@@ -167,6 +167,13 @@ def read_modules_for_course(course_id: int, skip: int = 0, limit: int = 10, db: 
     modules = crud.get_modules_for_course(db, course_id=course_id, skip=skip, limit=limit)
     return modules
 
+@app.get("/modules/{module_id}", response_model=schemas.Module)
+def read_module_details(module_id: int, db: Session = Depends(get_db)):
+    db_module = crud.get_module(db, module_id=module_id)
+    if db_module is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Module not found")
+    return db_module
+
 @app.put("/modules/{module_id}", response_model=schemas.Module)
 def update_module_details(
     module_id: int,

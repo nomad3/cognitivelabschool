@@ -42,53 +42,24 @@ const AdminManageModuleLessonsPage = () => {
 
   const fetchModuleAndLessons = async () => {
     setLoading(true);
+    setError(null); 
     try {
       const token = localStorage.getItem('access_token');
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
-      // First, fetch module details to get course_id for breadcrumbs/links
-      // The /modules/{module_id}/lessons endpoint might not return full module details.
-      // A dedicated /modules/{module_id} endpoint would be better if it exists and returns course_id.
-      // For now, let's assume we might need to make two calls or the lessons endpoint is sufficient.
-      // Let's try to get lessons first, then module details if needed.
       
-      const lessonsResponse = await fetch(`${backendUrl}/modules/${moduleId}/lessons`, {
+      // Fetch module details (which should include lessons and course_id)
+      const moduleResponse = await fetch(`${backendUrl}/modules/${moduleId}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
-      if (!lessonsResponse.ok) {
-        throw new Error('Failed to fetch lessons for the module');
+
+      if (!moduleResponse.ok) {
+        if (moduleResponse.status === 404) {
+            throw new Error(`Module with ID ${moduleId} not found.`);
+        }
+        throw new Error('Failed to fetch module details');
       }
-      const lessonsData: Lesson[] = await lessonsResponse.json();
-      
-      // To get module title and course_id, we might need another call if not included.
-      // For simplicity, we'll assume we need to fetch the module itself if it's not part of lessons response.
-      // This is a placeholder; ideally, an endpoint like GET /modules/{moduleId} would give all info.
-      // For now, we'll simulate having module details. A proper implementation might need a GET /modules/{id} endpoint.
-      // Let's assume the parent page (module list) passes enough info or we fetch it.
-      // For this example, we'll just use moduleId and try to get courseId from a potential future endpoint or context.
-      // This part needs refinement based on actual API capabilities for module details.
-      // For now, we'll set a placeholder title.
-      
-      // A better approach: fetch the course, then filter to the module, then its lessons.
-      // Or have a /admin/modules/{moduleId} endpoint that returns the module with its lessons and parent course_id.
-      // The current /courses/{course_id} returns modules with lessons.
-      // So, to get module title and course_id, we'd need to know course_id first.
-      // This page is navigated from a page that knows courseId. We should pass it or re-fetch.
-      // For now, we'll assume we have courseId from context or props if this were a real app.
-      // Since we don't, we'll make a simplified assumption.
-      
-      // This is a simplified placeholder for module title and course_id
-      // In a real app, you'd fetch this properly.
-      // We need course_id to link back. We can try to get it from the first lesson's module if available,
-      // but that's not robust.
-      // For now, we'll just display lessons.
-      
-      // Let's assume we have a way to get the module's parent course_id and module title.
-      // This is a gap in the current API design for this specific page.
-      // We will proceed by just showing lessons and making create/edit/delete work.
-      // The title of the module will be fetched if possible, or shown as "Module Lessons"
-      
-      // Simplified: just set lessons for now. Module title/course_id would require more complex fetching logic here.
-      setModuleDetails({ id: parseInt(moduleId), title: `Module ${moduleId}`, course_id: 0, lessons: lessonsData }); // Placeholder course_id
+      const moduleData: ModuleDetails = await moduleResponse.json();
+      setModuleDetails(moduleData);
 
     } catch (err) {
       if (err instanceof Error) setError(err.message);
