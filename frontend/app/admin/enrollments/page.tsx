@@ -76,60 +76,66 @@ const AdminEnrollmentsPage = () => {
   }, [router]);
 
   if (loading) {
-    return <div className="flex justify-center items-center h-screen">Loading enrollments...</div>;
+    return <div className="flex justify-center items-center h-screen bg-gray-900 text-white">Loading enrollments...</div>;
   }
 
   if (!isAdminUser) {
     return (
-      <div className="flex flex-col justify-center items-center h-screen">
+      <div className="flex flex-col justify-center items-center h-screen bg-gray-900 text-white">
         <p className="text-xl text-red-500">Access Denied.</p>
+        <p className="text-gray-300">You do not have permission to view this page.</p>
       </div>
     );
   }
 
   if (error) {
-    return <div className="flex justify-center items-center h-screen text-red-500">Error: {error}</div>;
+    return <div className="min-h-screen bg-gray-900 text-white py-8 container mx-auto px-4 text-red-400">Error: {error}</div>;
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Manage Enrollments</h1>
-        <Link href="/admin" className="text-sm text-blue-500 hover:text-blue-700">
-            &larr; Back to Admin Dashboard
-        </Link>
-      </div>
-
-      {enrollments.length === 0 ? (
-        <p>No enrollments found.</p>
-      ) : (
-        <div className="bg-white shadow-md rounded-lg overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User Email</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course Title</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Enrolled At</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Completed Lessons</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {enrollments.map((enrollment) => (
-                <tr key={enrollment.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{enrollment.id}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{enrollment.user.email}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{enrollment.course.title}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    {new Date(enrollment.enrolled_at).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{enrollment.completed_lessons.length}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+    <div className="min-h-screen bg-gray-900 text-white py-8">
+      <div className="container mx-auto px-4">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-bold text-teal-400">Manage Enrollments</h1>
+          <Link href="/admin" className="text-indigo-400 hover:text-indigo-300 font-semibold py-2 px-4 rounded transition-colors flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H15a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+            </svg>
+            Back to Admin Dashboard
+          </Link>
         </div>
-      )}
+
+        {enrollments.length === 0 ? (
+          <p className="text-center text-gray-400 text-lg">No enrollments found.</p>
+        ) : (
+          <div className="bg-gray-800 shadow-xl rounded-lg overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-700">
+              <thead className="bg-gray-700">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">ID</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">User Email</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Course Title</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Enrolled At</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Completed Lessons</th>
+                </tr>
+              </thead>
+              <tbody className="bg-gray-800 divide-y divide-gray-700">
+                {enrollments.map((enrollment) => (
+                  <tr key={enrollment.id} className="hover:bg-gray-700/50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100">{enrollment.id}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{enrollment.user.email}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{enrollment.course.title}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                      {new Date(enrollment.enrolled_at).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{enrollment.completed_lessons.length}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
