@@ -199,6 +199,26 @@ def delete_module_by_id(
     crud.delete_module(db=db, module_id=module_id)
     return None
 
+async def get_current_admin_or_instructor_for_lesson(
+    lesson_id: int, 
+    db: Session = Depends(get_db), 
+    current_user: models.User = Depends(get_current_user)
+):
+    db_lesson = crud.get_lesson(db, lesson_id=lesson_id)
+    if not db_lesson:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lesson not found")
+    
+    db_module = crud.get_module(db, module_id=db_lesson.module_id)
+    if not db_module: # Should not happen if lesson exists with valid module_id
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Parent module not found")
+
+    db_course = crud.get_course(db, course_id=db_module.course_id)
+    if not db_course: # Should not happen
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Parent course not found")
+
+    if not current_user.is_admin and (db_course.instructor_id is None or db_course.instructor_id != current_user.id):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized for this lesson")
+    return current_user # or could return the lesson/module/course if needed by endpoint
 
 # Lesson Endpoints
 @app.post("/modules/{module_id}/lessons/", response_model=schemas.Lesson, status_code=status.HTTP_201_CREATED)
@@ -221,6 +241,31 @@ def read_lessons_for_module(module_id: int, skip: int = 0, limit: int = 100, db:
         raise HTTPException(status_code=404, detail="Module not found")
     lessons = crud.get_lessons_for_module(db, module_id=module_id, skip=skip, limit=limit)
     return lessons
+
+@app.put("/lessons/{lesson_id}", response_model=schemas.Lesson)
+def update_lesson_details(
+    lesson_id: int,
+    lesson_update: schemas.LessonUpdate,
+    db: Session = Depends(get_db),
+    # Use the new dependency to ensure admin or correct instructor
+    authorized_user: models.User = Depends(get_current_admin_or_instructor_for_lesson)
+):
+    # The dependency already checks if lesson exists and if user is authorized
+    updated_lesson = crud.update_lesson(db=db, lesson_id=lesson_id, lesson_update=lesson_update)
+    if updated_lesson is None: # Should ideally not happen if get_lesson in dependency worked
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not update lesson")
+    return updated_lesson
+
+@app.delete("/lessons/{lesson_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_lesson_by_id(
+    lesson_id: int,
+    db: Session = Depends(get_db),
+    # Use the new dependency
+    authorized_user: models.User = Depends(get_current_admin_or_instructor_for_lesson)
+):
+    # Dependency ensures lesson exists and user is authorized
+    crud.delete_lesson(db=db, lesson_id=lesson_id)
+    return None
 
 @app.get("/lessons/{lesson_id}", response_model=schemas.Lesson)
 def read_lesson(lesson_id: int, db: Session = Depends(get_db)):

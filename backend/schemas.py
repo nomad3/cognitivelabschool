@@ -33,6 +33,12 @@ class LessonBase(BaseModel):
 class LessonCreate(LessonBase):
     pass
 
+class LessonUpdate(BaseModel):
+    title: Optional[str] = None
+    content: Optional[str] = None
+    content_type: Optional[str] = None
+    order: Optional[int] = None
+
 class Lesson(LessonBase):
     id: int
     module_id: int

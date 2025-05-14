@@ -133,6 +133,29 @@ def get_lessons_for_module(db: Session, module_id: int, skip: int = 0, limit: in
 def get_lesson(db: Session, lesson_id: int):
     return db.query(models.Lesson).filter(models.Lesson.id == lesson_id).first()
 
+def update_lesson(db: Session, lesson_id: int, lesson_update: schemas.LessonUpdate):
+    db_lesson = get_lesson(db, lesson_id=lesson_id)
+    if not db_lesson:
+        return None
+
+    update_data = lesson_update.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_lesson, key, value)
+    
+    db.add(db_lesson)
+    db.commit()
+    db.refresh(db_lesson)
+    return db_lesson
+
+def delete_lesson(db: Session, lesson_id: int):
+    db_lesson = get_lesson(db, lesson_id=lesson_id)
+    if not db_lesson:
+        return None
+        
+    db.delete(db_lesson)
+    db.commit()
+    return True
+
 
 # Enrollment CRUD
 def create_enrollment(db: Session, enrollment: schemas.EnrollmentCreate):
