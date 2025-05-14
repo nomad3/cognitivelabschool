@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Dict # Ensure Dict is imported
 from datetime import datetime # Added for enrolled_at
 
 # Skill Schemas
@@ -16,6 +16,26 @@ class SkillUpdate(BaseModel):
 
 class Skill(SkillBase):
     id: int
+    model_config = {"from_attributes": True}
+
+# UserSkill Schemas (for user skill proficiency)
+class UserSkillBase(BaseModel):
+    user_id: int
+    skill_id: int
+    proficiency_score: int # e.g., 0-100
+
+class UserSkillCreate(UserSkillBase):
+    pass
+
+class UserSkillUpdate(BaseModel):
+    proficiency_score: int 
+
+class UserSkill(UserSkillBase):
+    id: int
+    last_assessed_at: str # Stored as ISO string
+    skill: Skill # Nested skill information
+    user: UserBase # Nested basic user information
+
     model_config = {"from_attributes": True}
 
 # Module Schemas
@@ -60,6 +80,20 @@ class Lesson(LessonBase):
     module_id: int
 
     model_config = {"from_attributes": True}
+
+
+# Quiz Schemas
+class UserAnswer(BaseModel):
+    question_id: str # Corresponds to 'id' in the question object in Lesson.content JSON
+    selected_option_id: str # Corresponds to 'id' in the option object(s)
+
+class QuizSubmissionCreate(BaseModel):
+    answers: List[UserAnswer]
+
+class QuizSubmissionResult(BaseModel):
+    lesson_id: int
+    overall_score: float # e.g., percentage 0.0 to 100.0
+    score_per_skill: Optional[Dict[int, float]] = None # Mapping skill_id (int) to score for that skill
 
 
 # Update Module schema to include lessons

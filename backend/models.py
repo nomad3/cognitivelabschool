@@ -15,6 +15,7 @@ class User(Base):
     # Add other fields like role, etc. as needed
 
     enrollments = relationship("Enrollment", back_populates="user")
+    skill_proficiencies = relationship("UserSkill", back_populates="user_profile")
 
 
 class Course(Base):
@@ -77,3 +78,17 @@ class Skill(Base):
     description = Column(Text, nullable=True)
     # Relationship to link skills to lessons or quiz questions could be added later if needed
     # e.g., through an association table or a direct ForeignKey if a lesson/question has one primary skill.
+    user_proficiencies = relationship("UserSkill", back_populates="skill_definition")
+
+
+class UserSkill(Base):
+    __tablename__ = "user_skills"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    skill_id = Column(Integer, ForeignKey("skills.id"), nullable=False)
+    proficiency_score = Column(Integer, nullable=False, default=0) # e.g., 0-100
+    last_assessed_at = Column(String, default=lambda: datetime.utcnow().isoformat(), onupdate=lambda: datetime.utcnow().isoformat())
+
+    user_profile = relationship("User", back_populates="skill_proficiencies")
+    skill_definition = relationship("Skill", back_populates="user_proficiencies")

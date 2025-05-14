@@ -219,6 +219,55 @@ def delete_skill(db: Session, skill_id: int):
     db.commit()
     return True
 
+# UserSkill CRUD (User Skill Proficiency)
+def get_user_skill(db: Session, user_id: int, skill_id: int):
+    return db.query(models.UserSkill).filter(
+        models.UserSkill.user_id == user_id,
+        models.UserSkill.skill_id == skill_id
+    ).first()
+
+def get_user_skills_by_user(db: Session, user_id: int, skip: int = 0, limit: int = 100):
+    return db.query(models.UserSkill).filter(models.UserSkill.user_id == user_id).offset(skip).limit(limit).all()
+
+def create_user_skill(db: Session, user_skill: schemas.UserSkillCreate):
+    # last_assessed_at is handled by default/onupdate in the model
+    db_user_skill = models.UserSkill(
+        user_id=user_skill.user_id,
+        skill_id=user_skill.skill_id,
+        proficiency_score=user_skill.proficiency_score
+    )
+    db.add(db_user_skill)
+    db.commit()
+    db.refresh(db_user_skill)
+    return db_user_skill
+
+def update_user_skill_proficiency(db: Session, user_skill_id: int, proficiency_score: int):
+    db_user_skill = db.query(models.UserSkill).filter(models.UserSkill.id == user_skill_id).first()
+    if not db_user_skill:
+        return None
+    db_user_skill.proficiency_score = proficiency_score
+    # last_assessed_at should auto-update due to onupdate in model
+    db.commit()
+    db.refresh(db_user_skill)
+    return db_user_skill
+
+def upsert_user_skill_proficiency(db: Session, user_id: int, skill_id: int, proficiency_score: int):
+    db_user_skill = get_user_skill(db, user_id=user_id, skill_id=skill_id)
+    if db_user_skill:
+        db_user_skill.proficiency_score = proficiency_score
+        # last_assessed_at will be updated by SQLAlchemy's onupdate
+    else:
+        db_user_skill = models.UserSkill(
+            user_id=user_id,
+            skill_id=skill_id,
+            proficiency_score=proficiency_score
+            # last_assessed_at will be set by default
+        )
+        db.add(db_user_skill)
+    db.commit()
+    db.refresh(db_user_skill)
+    return db_user_skill
+
 def get_enrollments_by_user(db: Session, user_id: int, skip: int = 0, limit: int = 100):
     return db.query(models.Enrollment).filter(models.Enrollment.user_id == user_id).offset(skip).limit(limit).all()
 

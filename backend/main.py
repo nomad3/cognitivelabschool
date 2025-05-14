@@ -395,6 +395,78 @@ def read_lesson(lesson_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Lesson not found")
     return db_lesson
 
+import json # For parsing quiz content
+
+@app.post("/lessons/{lesson_id}/submit_quiz", response_model=schemas.QuizSubmissionResult)
+def submit_quiz_answers(
+    lesson_id: int,
+    submission: schemas.QuizSubmissionCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    db_lesson = crud.get_lesson(db, lesson_id=lesson_id)
+    if not db_lesson:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lesson (quiz) not found")
+    if db_lesson.content_type != 'quiz':
+        raise HTTPException(status_code=400, detail="This lesson is not a quiz")
+    if not db_lesson.content:
+        raise HTTPException(status_code=500, detail="Quiz content is missing")
+
+    try:
+        quiz_data = json.loads(db_lesson.content)
+        questions = quiz_data.get("questions", [])
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=500, detail="Invalid quiz content format")
+
+    if not questions:
+        return schemas.QuizSubmissionResult(lesson_id=lesson_id, overall_score=0, score_per_skill={})
+
+    correct_answers_count = 0
+    total_questions = len(questions)
+    
+    skill_scores: Dict[int, List[bool]] = {} # skill_id: [is_correct]
+
+    # Create a map for quick question lookup
+    question_map = {q.get("id"): q for q in questions}
+
+    for user_answer in submission.answers:
+        question_id_str = str(user_answer.question_id) # Ensure string comparison if IDs are numbers in JSON
+        question_details = question_map.get(question_id_str)
+        
+        if question_details:
+            is_correct = (str(question_details.get("correctAnswer")) == str(user_answer.selected_option_id))
+            if is_correct:
+                correct_answers_count += 1
+            
+            # Track skill performance
+            skill_ids = question_details.get("skill_ids", [])
+            if isinstance(skill_ids, list): # Ensure it's a list
+                for skill_id in skill_ids:
+                    if isinstance(skill_id, int): # Ensure skill_id is an int
+                        if skill_id not in skill_scores:
+                            skill_scores[skill_id] = []
+                        skill_scores[skill_id].append(is_correct)
+
+    overall_score = (correct_answers_count / total_questions) * 100 if total_questions > 0 else 0
+    
+    final_skill_scores: Dict[int, float] = {}
+    for skill_id, results in skill_scores.items():
+        if results:
+            skill_correct_count = sum(1 for r in results if r)
+            skill_proficiency = (skill_correct_count / len(results)) * 100
+            final_skill_scores[skill_id] = round(skill_proficiency, 2)
+            # Upsert user skill proficiency
+            crud.upsert_user_skill_proficiency(db, user_id=current_user.id, skill_id=skill_id, proficiency_score=int(round(skill_proficiency)))
+            
+    # Ensure keys in score_per_skill are strings for JSON compatibility if needed by Pydantic/client
+    # The schema QuizSubmissionResult has Optional[Dict[int, float]], so int keys are fine here.
+
+    return schemas.QuizSubmissionResult(
+        lesson_id=lesson_id,
+        overall_score=round(overall_score, 2),
+        score_per_skill=final_skill_scores if final_skill_scores else None
+    )
+
 # Enrollment Endpoints
 @app.post("/enrollments/", response_model=schemas.Enrollment, status_code=status.HTTP_201_CREATED)
 def enroll_in_course(enrollment: schemas.EnrollmentCreate, db: Session = Depends(get_db), current_user: schemas.User = Depends(get_current_user)):
